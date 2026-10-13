@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beesi — Community Chit-Fund Manager</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="selftest-banner" hidden></div>
+
+<header class="appbar">
+  <div class="wrap appbar-in">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 40 40" width="36" height="36"><circle cx="20" cy="20" r="17" fill="none" stroke="#C19A3F" stroke-width="3"/><circle cx="20" cy="20" r="11.5" fill="none" stroke="#C19A3F" stroke-width="1.5" opacity="0.7"/><text x="20" y="26.5" text-anchor="middle" font-size="15" font-weight="700" fill="#C19A3F" font-family="Georgia, serif">₹</text></svg>
+      </span>
+      <div>
+        <div class="brand-name">Beesi</div>
+        <div class="brand-sub">Community chit-fund ledger</div>
+      </div>
+    </div>
+    <div class="appbar-right">
+      <label class="grouplab" for="group-select">Group</label>
+      <select id="group-select" class="group-select" aria-label="Active group"></select>
+      <button class="btn btn-gold btn-sm" id="btn-new-group" type="button"></button>
+    </div>
+  </div>
+</header>
+
+<div class="groupstrip">
+  <div class="wrap groupstrip-in" id="groupstrip"></div>
+</div>
+
+<nav class="tabs" aria-label="Sections">
+  <div class="wrap tabs-in" id="tabs">
+    <button class="tab" data-tab="dashboard" type="button"><span class="tab-ic" data-ic="grid"></span>Dashboard</button>
+    <button class="tab" data-tab="collections" type="button"><span class="tab-ic" data-ic="wallet"></span>Collections</button>
+    <button class="tab" data-tab="payouts" type="button"><span class="tab-ic" data-ic="cycle"></span>Payouts</button>
+    <button class="tab" data-tab="members" type="button"><span class="tab-ic" data-ic="users"></span>Members</button>
+    <button class="tab" data-tab="defaulters" type="button"><span class="tab-ic" data-ic="alert"></span>Defaulters</button>
+    <button class="tab" data-tab="groups" type="button"><span class="tab-ic" data-ic="box"></span>Groups</button>
+  </div>
+</nav>
+
+<main id="view" class="wrap"></main>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <span>Beesi keeps your committee's money honest — every rupee accounted.</span>
+    <span class="foot-note">Data stays in this browser.</span>
+  </div>
+</footer>
+
+<div id="modal-root"></div>
+<div id="toast-root" aria-live="polite"></div>
+<script src="app.js"></script>
+</body>
+</html>

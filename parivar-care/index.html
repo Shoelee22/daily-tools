@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Parivar Care — Elder Care at Home</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="header-inner">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="16" cy="16" r="6.5"/>
+          <path d="M16 3v3.5M16 25.5V29M3 16h3.5M25.5 16H29M6.8 6.8l2.5 2.5M22.7 22.7l2.5 2.5M25.2 6.8l-2.5 2.5M9.3 22.7l-2.5 2.5"/>
+        </svg>
+      </span>
+      <div class="brand-text">
+        <span class="brand-name">Parivar Care</span>
+        <span class="brand-tag">Elder care, gently organised</span>
+      </div>
+    </div>
+    <nav class="tabs" aria-label="Main sections">
+      <button class="tab" data-view="dashboard" aria-current="page">Home</button>
+      <button class="tab" data-view="elders">Elders</button>
+      <button class="tab" data-view="medicines">Medicines</button>
+      <button class="tab" data-view="checkins">Check-ins</button>
+      <button class="tab" data-view="sos">SOS</button>
+    </nav>
+  </div>
+  <div class="header-arc" aria-hidden="true"></div>
+</header>
+
+<main class="page" id="app">
+  <section id="view-dashboard" class="view" aria-label="Dashboard"></section>
+  <section id="view-elders" class="view" aria-label="Elders" hidden></section>
+  <section id="view-medicines" class="view" aria-label="Medicines" hidden></section>
+  <section id="view-checkins" class="view" aria-label="Check-ins" hidden></section>
+  <section id="view-sos" class="view" aria-label="SOS" hidden></section>
+</main>
+
+<footer class="site-footer">
+  <p>Parivar Care keeps your family's care notes on this device only. Data never leaves this browser.</p>
+</footer>
+
+<div id="modal-root"></div>
+<div id="selftest-banner" class="selftest-banner" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>

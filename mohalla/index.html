@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mohalla — Neighbourhood Board</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="selftest-banner" hidden></div>
+
+<header class="appbar">
+  <div class="wrap appbar-in">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 40 40" width="36" height="36"><rect x="4" y="4" width="32" height="32" rx="9" fill="#2F7D3D"/><path d="M20 28s-8.5-6.6-8.5-12.5a4.8 4.8 0 019.5-1.2 4.8 4.8 0 019.5 1.2C30.5 21.4 20 28 20 28z" fill="none" stroke="#fff" stroke-width="2.4" stroke-linejoin="round"/><circle cx="20" cy="15.5" r="2.2" fill="#fff"/></svg>
+      </span>
+      <div>
+        <div class="brand-name">Mohalla</div>
+        <div class="brand-sub">Your neighbourhood board</div>
+      </div>
+    </div>
+    <div class="appbar-right">
+      <div class="searchbox">
+        <span class="search-ic" aria-hidden="true"></span>
+        <input type="search" id="search" placeholder="Search the board…" aria-label="Search the board">
+      </div>
+      <button class="btn btn-outline-w btn-sm" id="btn-mine" type="button" aria-pressed="false">My postings</button>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="Board sections">
+  <div class="wrap tabs-in" id="tabs">
+    <button class="tab" data-tab="notices" type="button"><span class="tab-ic" data-ic="pin"></span>Notices <span class="cnt" data-cnt="notices"></span></button>
+    <button class="tab" data-tab="listings" type="button"><span class="tab-ic" data-ic="tag"></span>Buy &amp; Sell <span class="cnt" data-cnt="listings"></span></button>
+    <button class="tab" data-tab="borrow" type="button"><span class="tab-ic" data-ic="box"></span>Borrow <span class="cnt" data-cnt="borrow"></span></button>
+    <button class="tab" data-tab="lostfound" type="button"><span class="tab-ic" data-ic="alert"></span>Lost &amp; Found <span class="cnt" data-cnt="lostfound"></span></button>
+  </div>
+</nav>
+
+<main id="view" class="wrap"></main>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <span>Put it on the board — notices, deals, lends and found things, all in one place.</span>
+    <span class="foot-note">Data stays in this browser.</span>
+  </div>
+</footer>
+
+<div id="modal-root"></div>
+<div id="toast-root" aria-live="polite"></div>
+<script src="app.js"></script>
+</body>
+</html>

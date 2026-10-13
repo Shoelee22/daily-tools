@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KisanSetu — Mandi Bhav, Kharcha, Yojana</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="header-inner">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 28V12"/>
+          <path d="M16 20c-4 0-7-2.5-8-6 3.5 0 6.5 1.5 8 6z"/>
+          <path d="M16 16c4 0 7-2.5 8-6-3.5 0-6.5 1.5-8 6z"/>
+          <path d="M16 12c-3 0-5.5-2-6.5-5 3 0 5.5 1.5 6.5 5z"/>
+          <path d="M16 12c3 0 5.5-2 6.5-5-3 0-5.5 1.5-6.5 5z"/>
+        </svg>
+      </span>
+      <div class="brand-text">
+        <span class="brand-name">KisanSetu</span>
+        <span class="brand-tag">Mandi bhav · Kharcha · Yojana</span>
+      </div>
+    </div>
+    <nav class="tabs" aria-label="Main sections">
+      <button class="tab" data-view="dashboard" aria-current="page">Home</button>
+      <button class="tab" data-view="prices">Mandi Bhav</button>
+      <button class="tab" data-view="expenses">Kharcha</button>
+      <button class="tab" data-view="schemes">Yojana</button>
+    </nav>
+  </div>
+</header>
+
+<main class="page" id="app">
+  <section id="view-dashboard" class="view" aria-label="Dashboard"></section>
+  <section id="view-prices" class="view" aria-label="Mandi prices" hidden></section>
+  <section id="view-expenses" class="view" aria-label="Farm expenses" hidden></section>
+  <section id="view-schemes" class="view" aria-label="Schemes" hidden></section>
+</main>
+
+<footer class="site-footer">
+  <p>KisanSetu stores your records on this device only. Mandi prices here are entered by you — verify selling rates at your mandi before trading.</p>
+</footer>
+
+<div id="modal-root"></div>
+<div id="selftest-banner" class="selftest-banner" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>

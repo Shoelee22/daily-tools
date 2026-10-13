@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MotoLog — Vehicle Companion</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="selftest-banner" hidden></div>
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17" r="3.5"/><circle cx="18.5" cy="17" r="3.5"/><path d="M5.5 17 9 9h4l3 8M9 9 7 5H4m8 4 2-3h3"/></svg>
+      </div>
+      <div class="brand-text">
+        <span class="brand-name">MOTO<span>LOG</span></span>
+        <span class="brand-sub">Garage companion</span>
+      </div>
+    </div>
+    <nav class="mainnav" id="mainnav" aria-label="Primary"></nav>
+  </div>
+</header>
+<main id="app" class="wrap"></main>
+<div id="modal-root"></div>
+<div id="toast-root" aria-live="polite"></div>
+<script src="app.js"></script>
+</body>
+</html>

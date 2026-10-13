@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="description" content="Dukaandaar POS — touch-friendly counter billing for kirana and pharmacy shops."/>
+<title>Dukaandaar POS — Counter Billing</title>
+<link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.7-5h14.6L21 9"/><path d="M4 9v11a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9"/><path d="M9 21v-6h6v6"/><path d="M3 9h18"/></svg>
+    </span>
+    <div class="brand-text">
+      <h1>Dukaandaar</h1>
+      <p>Counter Billing</p>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <span class="date-chip" id="clock" aria-label="Current date and time"></span>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="POS sections">
+  <button class="tab is-active" role="tab" aria-selected="true" data-action="nav" data-view="bill">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h14v18l-2.3-1.5L14.4 21l-2.4-1.5L9.6 21l-2.3-1.5L5 21z"/><path d="M9 8h6M9 12h6"/></svg>
+    <span>Bill</span>
+  </button>
+  <button class="tab" role="tab" aria-selected="false" data-action="nav" data-view="products">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/></svg>
+    <span>Products</span>
+  </button>
+  <button class="tab" role="tab" aria-selected="false" data-action="nav" data-view="reports">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M6 21v-7M11 21V5M16 21v-11M21 21V9"/></svg>
+    <span>Reports</span>
+  </button>
+  <button class="tab" role="tab" aria-selected="false" data-action="nav" data-view="stock">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l10 5.5L12 13 2 7.5z"/><path d="M2 12.5L12 18l10-5.5"/><path d="M2 17.5L12 23l10-5.5" opacity="0"/></svg>
+    <span>Stock</span>
+  </button>
+  <button class="tab" role="tab" aria-selected="false" data-action="nav" data-view="settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.65 8.9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.08A1.7 1.7 0 0 0 10.12 3V3a2 2 0 1 1 4 0v.09c0 .68.4 1.3 1.03 1.56.6.26 1.3.13 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.08c.26.6.88 1.03 1.56 1.03H21a2 2 0 1 1 0 4h-.09c-.68 0-1.3.4-1.51 1.03z"/></svg>
+    <span>Settings</span>
+  </button>
+</nav>
+
+<main id="view" aria-live="polite"></main>
+
+<div id="modal-root"></div>
+<div id="toast-root" aria-live="polite" aria-atomic="true"></div>
+<div id="print-area" aria-hidden="true"></div>
+<div id="selftest-banner" hidden></div>
+
+<script src="app.js"></script>
+</body>
+</html>

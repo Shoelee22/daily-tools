@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GharSeva — Home Services, On Demand</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="selftest-banner" hidden></div>
+<header class="site-header">
+  <div class="header-inner">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="m9.5 15.5 2 2 3.5-4"/></svg>
+      </span>
+      <div>
+        <span class="brand-name">GharSeva</span>
+        <span class="brand-sub">Trusted home pros</span>
+      </div>
+    </div>
+    <nav class="topnav" aria-label="Primary">
+      <button class="nav-btn is-active" data-view="directory" type="button">Find a Pro</button>
+      <button class="nav-btn" data-view="bookings" type="button">My Bookings <span class="nav-badge" id="booking-badge" hidden></span></button>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+  <section id="view-directory" class="view is-active" aria-label="Pro directory"></section>
+  <section id="view-book" class="view" aria-label="Book a service"></section>
+  <section id="view-bookings" class="view" aria-label="My bookings"></section>
+</main>
+
+<footer class="site-footer">
+  <p>GharSeva · Verified local pros for every home fix · Data stays in this browser</p>
+</footer>
+
+<div id="modal-root"></div>
+<div id="toast-root" aria-live="polite"></div>
+<script src="app.js"></script>
+</body>
+</html>

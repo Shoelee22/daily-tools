@@ -1,0 +1,272 @@
+/* KisanSetu — "craft store" identity.
+   Adapted from the Starbucks design system: warm cream canvas, a calibrated
+   family of greens mapped to surface roles, full-pill buttons with a
+   scale(.95) press, whisper-layered shadows, color-block rhythm, and a
+   context-specific serif reserved for chalkboard moments (the mandi boards).
+   Harvest-gold is ceremony-only (latest price, milestones). System fonts only. */
+:root{
+  --canvas:#f3eee1;            /* warm wheat-cream page */
+  --card:#fffdf7;              /* white card surface */
+  --ink:#2b2417;               /* warm near-black, never pure */
+  --ink-soft:rgba(43,36,23,.58);
+  --hairline:#e4d9bd;
+  --pine:#23402c;              /* deep house green: boards, bands, footer */
+  --leaf:#2f6e34;              /* brand green: headings */
+  --cta:#387a2f;               /* accent green: filled CTAs */
+  --cta-deep:#2c6125;
+  --mint:#dce9d3;              /* light green tint */
+  --wheat:#c9972b;             /* harvest gold: ceremony-only */
+  --wheat-soft:#f6ead0;
+  --chalk:#f7f3e4;             /* chalk writing on boards */
+  --chalk-dim:rgba(247,243,228,.68);
+  --chalk-green:#cfe6b8;
+  --danger:#b02a20;
+  --danger-tint:#f7e3dc;
+  --radius-card:12px;
+  --radius-pill:50px;
+  --shadow-card:0 0 .5px rgba(43,36,23,.14), 0 1px 1px rgba(43,36,23,.24);
+  --shadow-nav:0 1px 3px rgba(43,36,23,.10), 0 2px 2px rgba(43,36,23,.06), 0 0 2px rgba(43,36,23,.07);
+  --shadow-float:0 0 6px rgba(43,36,23,.20), 0 8px 12px rgba(43,36,23,.12);
+  --ease:all .2s ease;
+  --press:cubic-bezier(.25,.46,.45,.94);
+  --font-sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Helvetica,Arial,sans-serif;
+  --font-serif:Georgia,"Iowan Old Style","Palatino Linotype","Book Antiqua",serif; /* chalkboard moments only */
+}
+*{box-sizing:border-box}
+html{font-size:17px}
+body{
+  margin:0;background:var(--canvas);color:var(--ink);
+  font-family:var(--font-sans);line-height:1.5;letter-spacing:-.01em;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{margin:0 0 .5rem;line-height:1.2;letter-spacing:-.01em;font-weight:600}
+p{margin:0 0 .7rem}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--cta);outline-offset:2px;border-radius:4px}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+
+/* ---------- header: warm storefront sign ---------- */
+.site-header{
+  background:var(--card);color:var(--ink);box-shadow:var(--shadow-nav);
+  position:sticky;top:0;z-index:40;
+}
+.header-inner{max-width:1120px;margin:0 auto;padding:.85rem 1.25rem;display:flex;flex-wrap:wrap;gap:1rem;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:.85rem}
+.brand-mark{
+  width:48px;height:48px;border-radius:50%;background:var(--cta);color:#fff;
+  display:grid;place-items:center;flex:none;box-shadow:var(--shadow-card);
+}
+.brand-mark svg{width:28px;height:28px}
+.brand-name{font-size:1.5rem;font-weight:600;color:var(--leaf);display:block;line-height:1.15;letter-spacing:-.01em}
+.brand-tag{font-size:.85rem;color:var(--ink-soft);display:block}
+.tabs{display:flex;gap:.5rem;flex-wrap:wrap}
+.tab{
+  border:1px solid transparent;background:transparent;color:var(--ink);
+  padding:.55rem 1.05rem;border-radius:var(--radius-pill);
+  font-weight:600;font-size:.98rem;min-height:44px;letter-spacing:-.01em;
+  transition:var(--ease);
+}
+.tab:hover{background:rgba(43,36,23,.06)}
+.tab:active{transform:scale(.95)}
+.tab[aria-current="page"]{background:var(--pine);color:var(--chalk)}
+
+/* ---------- page: cream breathing between white cards ---------- */
+.page{max-width:1120px;margin:0 auto;padding:2.4rem 1.25rem 4rem}
+.view[hidden]{display:none}
+.page-head{margin-bottom:2rem}
+.page-head h1{font-size:1.9rem;font-weight:600;color:var(--leaf)}
+.page-head .sub{color:var(--ink-soft);font-size:1rem}
+.section-title{
+  font-size:1.3rem;font-weight:600;margin:2.4rem 0 1.1rem;padding-bottom:.5rem;
+  border-bottom:1px solid var(--hairline);letter-spacing:-.01em;
+}
+
+/* ---------- buttons: the universal pill ---------- */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:.5rem;
+  border-radius:var(--radius-pill);border:1px solid transparent;
+  font-weight:600;font-size:1rem;letter-spacing:-.01em;
+  padding:.7rem 1.5rem;min-height:48px;text-decoration:none;
+  transition:var(--ease);
+}
+.btn:active{transform:scale(.95)}
+.btn .ic{width:20px;height:20px}
+.btn.primary{background:var(--cta);border-color:var(--cta);color:#fff;box-shadow:var(--shadow-card)}
+.btn.primary:hover{background:var(--cta-deep);border-color:var(--cta-deep)}
+.btn.ghost{background:transparent;border-color:rgba(43,36,23,.87);color:var(--ink)}
+.btn.ghost:hover{background:rgba(43,36,23,.05)}
+.btn.danger-ghost{background:transparent;border-color:var(--danger);color:var(--danger)}
+.btn.danger-ghost:hover{background:var(--danger-tint)}
+.btn.small{min-height:44px;padding:.5rem 1.05rem;font-size:.93rem}
+.icon-btn{
+  width:44px;height:44px;border-radius:50%;border:1px solid var(--hairline);
+  background:var(--card);display:inline-grid;place-items:center;color:var(--ink-soft);
+  box-shadow:var(--shadow-card);transition:var(--ease);
+}
+.icon-btn:hover{color:var(--cta-deep);border-color:var(--cta)}
+.icon-btn:active{transform:scale(.95)}
+.icon-btn.danger:hover{color:var(--danger);border-color:var(--danger)}
+.icon-btn .ic{width:21px;height:21px}
+
+/* ---------- dashboard tiles: white cards on cream ---------- */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-bottom:.5rem}
+.tile{
+  background:var(--card);border:1px solid var(--hairline);border-radius:var(--radius-card);
+  box-shadow:var(--shadow-card);padding:1.2rem 1.3rem;border-top:5px solid var(--leaf);
+}
+.tile.wheat{border-top-color:var(--wheat)}
+.tile.soil{border-top-color:var(--pine)}
+.tile .k{font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft)}
+.tile .v{font-size:1.9rem;font-weight:600;margin:.2rem 0;letter-spacing:-.01em}
+.tile .s{font-size:.93rem;color:var(--ink-soft)}
+
+/* ---------- mandi boards: the chalkboard ---------- */
+.boards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:1rem}
+.board{
+  background:var(--pine);color:var(--chalk);border-radius:var(--radius-card);
+  padding:1.3rem 1.35rem;box-shadow:var(--shadow-float);
+  border:1px solid #182c1f;position:relative;overflow:hidden;
+}
+.board::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent 0 26px,rgba(247,243,228,.055) 26px 27px)}
+.board .crop{
+  font-family:var(--font-serif);font-size:1.25rem;font-weight:400;
+  color:var(--wheat);letter-spacing:.02em;
+}
+.board .price{font-size:2.4rem;font-weight:600;color:var(--chalk);margin:.3rem 0 .1rem;letter-spacing:-.01em}
+.board .unit{font-size:.85rem;color:var(--chalk-dim)}
+.board .meta{display:flex;justify-content:space-between;align-items:center;margin-top:.8rem;font-size:.88rem;border-top:1px solid rgba(247,243,228,.18);padding-top:.7rem}
+.board .mandi{color:var(--chalk-dim)}
+.trend{display:inline-flex;align-items:center;gap:.3rem;font-weight:600}
+.trend .ic{width:16px;height:16px}
+.trend.up{color:var(--chalk-green)}
+.trend.down{color:#f0a08e}
+.trend.flat{color:var(--chalk-dim)}
+
+/* ---------- tables: the ledger ---------- */
+.table-wrap{background:var(--card);border:1px solid var(--hairline);border-radius:var(--radius-card);box-shadow:var(--shadow-card);overflow-x:auto;margin-bottom:1.3rem}
+table.ledger{width:100%;border-collapse:collapse;font-size:1rem;min-width:560px}
+.ledger th{
+  text-align:left;font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;font-weight:600;
+  color:var(--ink-soft);padding:.85rem 1rem;border-bottom:1px solid var(--hairline);
+  background:var(--canvas);white-space:nowrap;
+}
+.ledger td{padding:.8rem 1rem;border-bottom:1px solid var(--hairline);vertical-align:middle}
+.ledger tr:last-child td{border-bottom:none}
+.ledger td.r,.ledger th.r{text-align:right}
+.ledger tr.latest-row td{background:var(--mint)}
+.pill{
+  display:inline-block;font-size:.74rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
+  background:var(--wheat);color:#fff;border-radius:var(--radius-pill);
+  padding:.22rem .6rem;margin-left:.5rem;vertical-align:middle;
+}
+
+/* ---------- filter chips: pills ---------- */
+.chips{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.2rem}
+.chip{
+  border:1px solid rgba(43,36,23,.5);background:var(--card);color:var(--ink);
+  border-radius:var(--radius-pill);padding:.55rem 1.15rem;font-weight:600;min-height:44px;
+  box-shadow:var(--shadow-card);transition:var(--ease);
+}
+.chip:active{transform:scale(.95)}
+.chip[aria-pressed="true"]{background:var(--pine);border-color:var(--pine);color:var(--chalk)}
+
+/* ---------- category bars ---------- */
+.bars{display:grid;gap:.8rem;margin-bottom:1.3rem}
+.bar-row{
+  display:grid;grid-template-columns:130px 1fr 110px;gap:.9rem;align-items:center;
+  background:var(--card);border:1px solid var(--hairline);border-radius:var(--radius-card);
+  box-shadow:var(--shadow-card);padding:.8rem 1.1rem;
+}
+.bar-row .cat{font-weight:600;text-transform:capitalize}
+.bar-track{height:12px;background:var(--canvas);border:1px solid var(--hairline);border-radius:var(--radius-pill);overflow:hidden}
+.bar-fill{height:100%;background:var(--cta);border-radius:var(--radius-pill);transition:width 300ms var(--press)}
+.bar-row .amt{text-align:right;font-weight:600}
+
+/* ---------- scheme cards ---------- */
+.scheme-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem}
+.scheme{
+  background:var(--card);border:1px solid var(--hairline);border-radius:var(--radius-card);
+  box-shadow:var(--shadow-card);padding:1.25rem;
+}
+.scheme.urgent{border:2px solid var(--danger)}
+.scheme.past{opacity:.75}
+.scheme h3{font-size:1.15rem;color:var(--ink)}
+.scheme .deadline{font-weight:600;font-size:1.05rem;margin:.35rem 0}
+.scheme .benefit{color:var(--ink-soft);font-size:.96rem}
+.scheme .note{font-size:.85rem;color:var(--ink-soft);font-style:italic;margin-top:.55rem}
+.days-badge{
+  display:inline-flex;align-items:center;gap:.35rem;border-radius:var(--radius-pill);
+  padding:.32rem .9rem;font-weight:600;font-size:.9rem;letter-spacing:-.01em;
+}
+.days-badge .ic{width:17px;height:17px}
+.days-badge.soon{background:var(--danger-tint);color:var(--danger)}
+.days-badge.mid{background:var(--wheat-soft);color:#7a5410}
+.days-badge.later{background:var(--mint);color:var(--cta-deep)}
+.days-badge.over{background:#e7e2d2;color:var(--ink-soft)}
+.status-badge{
+  display:inline-block;border-radius:6px;padding:.22rem .7rem;font-size:.85rem;font-weight:600;
+  background:var(--canvas);border:1px solid var(--hairline);color:var(--ink-soft);
+}
+.status-badge.applied{background:var(--mint);border-color:var(--mint);color:var(--cta-deep)}
+.scheme-actions{display:flex;gap:.5rem;margin-top:1rem}
+
+/* ---------- feature band: deep green bookend ---------- */
+.site-footer{
+  background:var(--pine);color:var(--chalk-dim);margin-top:1rem;
+  padding:2.5rem 1.25rem 2rem;text-align:center;font-size:.9rem;
+}
+.site-footer p{max-width:1120px;margin:0 auto;color:rgba(247,243,228,.7)}
+.ic{flex:none}
+
+/* ---------- modal ---------- */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(35,64,44,.5);display:grid;place-items:center;
+  padding:1rem;z-index:50;opacity:0;transition:opacity 200ms var(--press);
+}
+.modal-overlay.show{opacity:1}
+.modal{
+  background:var(--card);border-radius:var(--radius-card);box-shadow:var(--shadow-float);
+  max-width:540px;width:100%;max-height:92vh;overflow:auto;padding:1.6rem;
+  transform:translateY(12px);opacity:0;transition:transform 240ms var(--press),opacity 240ms var(--press);
+}
+.modal-overlay.show .modal{transform:none;opacity:1}
+.modal h2{font-size:1.45rem;font-weight:600;margin-bottom:1.1rem;color:var(--leaf)}
+.field{margin-bottom:1.1rem}
+.field label{display:block;font-weight:600;margin-bottom:.4rem}
+.field input,.field select,.field textarea{
+  width:100%;font:inherit;font-size:1rem;padding:.7rem .9rem;border-radius:8px;
+  border:1px solid var(--hairline);background:#fff;color:var(--ink);min-height:50px;
+}
+.field textarea{min-height:88px;resize:vertical}
+.field input:focus,.field select:focus,.field textarea:focus{
+  outline:none;border-color:var(--cta);box-shadow:0 0 0 3px var(--mint);
+}
+.field .err{color:var(--danger);font-size:.9rem;font-weight:600;margin-top:.3rem;min-height:1.2em}
+.field .hint{font-size:.88rem;color:var(--ink-soft);margin-top:.3rem}
+.modal-actions{display:flex;gap:.7rem;justify-content:flex-end;margin-top:1.2rem;flex-wrap:wrap}
+
+/* ---------- misc ---------- */
+.empty{
+  text-align:center;padding:2.4rem 1.5rem;border:1px dashed var(--hairline);
+  border-radius:var(--radius-card);background:var(--card);color:var(--ink-soft);
+  box-shadow:var(--shadow-card);
+}
+.empty .ic{width:42px;height:42px;color:var(--cta);margin-bottom:.5rem}
+.empty h3{color:var(--ink)}
+.selftest-banner{
+  position:fixed;left:0;right:0;bottom:0;z-index:99;padding:.9rem 1.2rem;text-align:center;
+  font-weight:600;font-size:1.05rem;
+}
+.selftest-banner.pass{background:var(--cta-deep);color:#fff}
+.selftest-banner.fail{background:var(--danger);color:#fff}
+
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.rise{animation:rise 300ms var(--press) backwards}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+@media(max-width:640px){
+  .bar-row{grid-template-columns:100px 1fr 96px}
+  .page-head h1{font-size:1.55rem}
+  .board .price{font-size:2rem}
+  .page{padding:1.6rem 1rem 3rem}
+}
