@@ -260,6 +260,18 @@ function toast(msg, type) {
   setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 200ms'; setTimeout(() => el.remove(), 220); }, 2600);
 }
 
+/* ---------- shared empty state (on-brand: cart-empty panel + CTA) ---------- */
+function emptyState(icon, title, sub, cta) {
+  // cta: { label, action, view? } — optional
+  let btn = '';
+  if (cta) {
+    btn = '<button class="btn btn-primary" data-action="' + cta.action + '"' +
+      (cta.view ? ' data-view="' + cta.view + '"' : '') + '>' + ICONS.plus + ' ' + cta.label + '</button>';
+  }
+  return '<div class="cart-empty" style="grid-column:1/-1">' + icon +
+    '<p><b>' + title + '</b><br/>' + sub + '</p>' + btn + '</div>';
+}
+
 /* ---------- modal ---------- */
 function openModal(html, wide) {
   const root = $('#modal-root');
@@ -390,6 +402,11 @@ function renderTiles() {
     (billFilter.cat === 'All' || p.cat === billFilter.cat) &&
     (!q || p.name.toLowerCase().indexOf(q) > -1)
   );
+  if (!S.products.length) {
+    grid.innerHTML = emptyState(ICONS.cart, 'No products yet', 'Add your first product to start billing.',
+      { label: 'Add your first product', action: 'open-product-modal' });
+    return;
+  }
   if (!list.length) { grid.innerHTML = '<div class="card" style="grid-column:1/-1;text-align:center;color:var(--ink-soft)">No products match. Try another search.</div>'; return; }
   grid.innerHTML = list.map(p =>
     '<button class="tile' + (p.stock <= 0 ? ' is-out' : '') + '" data-action="tile-add" data-pid="' + p.id + '" ' + (p.stock <= 0 ? 'disabled' : '') + '>' +
@@ -412,13 +429,20 @@ function renderProductRows() {
   const tb = $('#product-rows'); if (!tb) return;
   const q = prodFilter.q.trim().toLowerCase();
   const list = S.products.filter(p => !q || p.name.toLowerCase().indexOf(q) > -1);
+  if (!list.length) {
+    tb.innerHTML = S.products.length
+      ? '<tr><td colspan="7" style="text-align:center;color:var(--ink-soft)">No products found.</td></tr>'
+      : '<tr><td colspan="7">' + emptyState(ICONS.plus, 'Catalog is empty', 'Add products here to sell them at the counter.',
+          { label: 'Add your first product', action: 'open-product-modal' }) + '</td></tr>';
+    return;
+  }
   tb.innerHTML = list.map(p =>
     '<tr><td><b>' + esc(p.name) + '</b><br/>' + stockPill(p) + '</td><td>' + esc(p.cat || '—') + '</td>' +
     '<td class="r num"><b>' + money(p.price) + '</b></td><td class="c">' + p.gst + '%</td>' +
     '<td class="r num">' + p.stock + '</td><td class="r num">' + p.low + '</td>' +
     '<td><div class="row-actions"><button class="icon-btn" data-action="edit-product" data-id="' + p.id + '" aria-label="Edit ' + esc(p.name) + '">' + ICONS.edit + '</button>' +
     '<button class="icon-btn danger" data-action="delete-product" data-id="' + p.id + '" aria-label="Delete ' + esc(p.name) + '">' + ICONS.trash + '</button></div></td></tr>'
-  ).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--ink-soft)">No products found.</td></tr>';
+  ).join('');
 }
 function productFormHTML(p) {
   p = p || {};
@@ -443,14 +467,15 @@ function viewReports() {
   const stat = (label, val, note) => '<div class="stat"><p class="s-label">' + label + '</p><p class="s-value num">' + val + '</p><p class="s-note">' + note + '</p></div>';
   const top = topItems(7).map((t, i) =>
     '<tr><td>' + (i + 1) + '</td><td><b>' + esc(t.name) + '</b></td><td class="r num">' + t.qty + '</td><td class="r num">' + money(t.revenue) + '</td></tr>'
-  ).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--ink-soft)">No sales in the last 7 days yet.</td></tr>';
+  ).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--ink-soft)">No sales yet — your first bill will appear here.</td></tr>';
   const recent = S.sales.slice(0, 12).map(s =>
     '<tr><td><b>' + esc(s.billNo) + '</b><br/><small style="color:var(--ink-soft)">' + esc(s.mode) + '</small></td>' +
     '<td>' + fmtDate(s.date) + '<br/><small style="color:var(--ink-soft)">' + esc(s.time || '') + '</small></td>' +
     '<td class="r num">' + s.items.reduce((a, i) => a + i.qty, 0) + '</td>' +
     '<td class="r num"><b>' + money(s.grand) + '</b></td>' +
     '<td><div class="row-actions"><button class="icon-btn" data-action="view-invoice" data-id="' + s.id + '" aria-label="View bill ' + esc(s.billNo) + '">' + ICONS.eye + '</button></div></td></tr>'
-  ).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--ink-soft)">No bills yet — complete a bill to see it here.</td></tr>';
+  ).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--ink-soft)">No sales yet — your first bill will appear here.<br/>' +
+    '<button class="btn btn-primary btn-sm" data-action="nav" data-view="bill" style="margin-top:10px">' + ICONS.plus + ' Create your first bill</button></td></tr>';
   return '<div class="view-head"><div><h2>Sales Reports</h2><p class="sub">Revenue, bills and best sellers</p></div></div>' +
     '<div class="stat-grid">' +
     stat('Revenue today', money(revenueOf(td)), td.length + ' bill' + (td.length === 1 ? '' : 's') + ' · ' + fmtDate(todayStr())) +
@@ -466,6 +491,11 @@ function viewReports() {
 
 /* ----- STOCK ----- */
 function viewStock() {
+  if (!S.products.length) {
+    return '<div class="view-head"><div><h2>Inventory</h2><p class="sub">Track stock levels here</p></div></div>' +
+      emptyState(ICONS.alert, 'Nothing to track yet', 'Add products to monitor stock levels and low-stock alerts.',
+        { label: 'Add your first product', action: 'open-product-modal' });
+  }
   const low = lowStockList();
   const alerts = low.length
     ? '<div class="alert-grid">' + low.map(p =>
@@ -500,8 +530,9 @@ function viewSettings() {
     '<div class="card"><h3 class="panel-title">Data</h3><p class="panel-sub">Everything stays on this device (localStorage)</p>' +
     '<div style="display:flex;flex-direction:column;gap:10px">' +
     '<button class="btn btn-ghost btn-block" data-action="export-data">Download backup (JSON)</button>' +
-    '<button class="btn btn-danger btn-block" data-action="reset-data">Reset all data</button>' +
-    '<p class="hint" style="font-size:13px;color:var(--ink-soft);margin:6px 0 0">Reset wipes products, sales, bills and settings, then restores the starter catalog.</p></div></div></div>';
+    '<button class="btn btn-ghost btn-block" data-action="sample-data">Load sample data</button>' +
+    '<button class="btn btn-danger btn-block" data-action="clear-data">Clear all data</button>' +
+    '<p class="hint" style="font-size:13px;color:var(--ink-soft);margin:6px 0 0">Clear all data wipes products, sales, held bills and shop details — you start fresh with an empty shop. Load sample data first if you want to explore with a demo catalog.</p></div></div></div>';
 }
 function exportData() {
   const dump = {};
@@ -579,9 +610,13 @@ document.addEventListener('click', e => {
     return;
   }
   if (a === 'export-data') { exportData(); return; }
-  if (a === 'reset-data') {
-    openConfirm('Reset everything? Products, sales, held bills and settings will be wiped and the starter catalog restored.', 'Reset all', () => {
-      store.wipe(); loadState(); seed(); view = 'bill'; render(); toast('All data reset.');
+  if (a === 'sample-data') {
+    seed(); view = 'bill'; render(); toast('Sample data loaded.');
+    return;
+  }
+  if (a === 'clear-data') {
+    openConfirm('Clear all data? Products, sales, held bills and shop details will be wiped. You will start fresh with an empty shop.', 'Clear all data', () => {
+      store.wipe(); loadState(); view = 'bill'; render(); toast('All data cleared. Starting fresh.');
     });
     return;
   }
@@ -704,20 +739,19 @@ function runSelftest() {
   } catch (err) {
     return { msg: 'SELFTEST FAIL: exception ' + String(err && err.message || err), ok: false, snapshot };
   } finally {
-    // restore normal-mode data (or leave pristine if none existed)
+    // end-of-test cleanup: leave the namespace EMPTY (wipe only, no re-seed),
+    // restoring any prior normal-mode data first so real use is never corrupted
     store.wipe();
     const keys = Object.keys(snapshot);
     if (keys.length) keys.forEach(k => localStorage.setItem(k, snapshot[k]));
     loadState();
-    if (!store.get('seeded', false)) seed();
     view = 'bill'; render();
   }
 }
 
 /* ---------- boot ---------- */
 function boot() {
-  loadState();
-  if (!store.get('seeded', false)) seed();
+  loadState();   // clean start: empty state when nothing stored (no auto-seed)
   render();
   startClock();
   if (new URLSearchParams(location.search).get('selftest') === '1') {

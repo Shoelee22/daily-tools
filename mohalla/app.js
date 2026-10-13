@@ -22,7 +22,8 @@ const ICONS = {
   phone:'<path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.13.96.36 1.9.7 2.8a2 2 0 01-.45 2.1L8.1 9.9a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.45c.9.34 1.84.57 2.8.7A2 2 0 0122 16.9z"/>',
   user:'<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>',
   cal:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
-  undo:'<path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-15-6.7L3 13"/>'
+  undo:'<path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-15-6.7L3 13"/>',
+  sliders:'<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>'
 };
 const icon = (n, cls) => '<svg class="ic ' + (cls || '') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICONS[n] || '') + '</svg>';
 $$('.tab-ic').forEach(el => { el.innerHTML = icon(el.dataset.ic); });
@@ -144,9 +145,9 @@ function setErr(name, msg){
   f.classList.toggle('invalid', !!msg);
   f.querySelector('.err').textContent = msg || '';
 }
-function confirmDlg(title, msg){
+function confirmDlg(title, msg, okLabel){
   return new Promise(resolve => {
-    openModal(title, '<p style="margin:0;color:var(--muted)">' + esc(msg) + '</p>', () => { resolve(true); return true; }, 'Delete');
+    openModal(title, '<p style="margin:0;color:var(--muted)">' + esc(msg) + '</p>', () => { resolve(true); return true; }, okLabel || 'Delete');
   });
 }
 
@@ -167,9 +168,12 @@ function applyFilters(list){
 function actionsHTML(list){
   return '<div class="actions">' + list.map(a => '<button class="abtn' + (a.danger ? ' danger' : '') + '" data-act="' + a.act + '" data-id="' + a.id + '">' + icon(a.ic) + esc(a.label) + '</button>').join('') + '</div>';
 }
-function emptyHTML(ic, title, msg, actLabel, act){
+function emptyHTML(ic, title, msg, actLabel, act, withSample){
   return '<div class="empty">' + icon(ic) + '<h3>' + esc(title) + '</h3><p>' + esc(msg) + '</p>' +
-    (act ? '<button class="btn btn-primary" data-act="' + act + '">' + icon('plus') + esc(actLabel) + '</button>' : '') + '</div>';
+    '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">' +
+    (act ? '<button class="btn btn-primary" data-act="' + act + '">' + icon('plus') + esc(actLabel) + '</button>' : '') +
+    (withSample ? '<button class="btn btn-ghost" data-act="load-sample">Explore with sample data</button>' : '') +
+    '</div></div>';
 }
 function tilt(i){ return i % 2 ? ' tilt-r' : ' tilt-l'; }
 
@@ -177,7 +181,7 @@ function tilt(i){ return i % 2 ? ' tilt-r' : ' tilt-l'; }
 function renderNotices(){
   const list = applyFilters(state.notices).sort((a, b) => (b.pinned - a.pinned) || (b.date < a.date ? -1 : 1));
   let html = pageHead('Notices', 'Announcements from the RWA and your neighbours.', 'Post notice', 'add-notice');
-  if (!list.length) return html + emptyHTML('pin', 'Nothing on the board', state.search || state.mineOnly ? 'No notices match your filter.' : 'Be the first to pin a notice for the mohalla.', 'Post notice', 'add-notice');
+  if (!list.length) return html + emptyHTML('pin', 'Nothing on the board', state.search || state.mineOnly ? 'No notices match your filter.' : 'Be the first to pin a notice for the mohalla.', 'Post notice', 'add-notice', !state.notices.length && !state.search && !state.mineOnly);
   html += '<div class="board">';
   list.forEach((n, i) => {
     html += '<article class="note' + (n.pinned ? ' pinned' : '') + tilt(i) + '">' +
@@ -196,7 +200,7 @@ function renderNotices(){
 function renderListings(){
   const list = applyFilters(state.listings).sort((a, b) => (a.status === 'sold') - (b.status === 'sold') || (b.date < a.date ? -1 : 1));
   let html = pageHead('Buy & Sell', 'Pre-loved things from people on your street. No middlemen.', 'List an item', 'add-listing');
-  if (!list.length) return html + emptyHTML('tag', 'Nothing for sale', state.search || state.mineOnly ? 'No listings match your filter.' : 'Got something to sell or give away? List it here.', 'List an item', 'add-listing');
+  if (!list.length) return html + emptyHTML('tag', 'Nothing for sale', state.search || state.mineOnly ? 'No listings match your filter.' : 'Got something to sell or give away? List it here.', 'List an item', 'add-listing', !state.listings.length && !state.search && !state.mineOnly);
   const avail = list.filter(l => l.status === 'available'), sold = list.filter(l => l.status === 'sold');
   html += '<div class="board">';
   if (avail.length) html += '<div class="board-label">Available · ' + avail.length + '</div>';
@@ -219,7 +223,7 @@ function listingCard(l, i){
 function renderBorrow(){
   const list = applyFilters(state.borrows);
   let html = pageHead('Borrow', 'Ladders, drills and tools your neighbours are happy to lend.', 'Offer an item', 'add-borrow');
-  if (!list.length) return html + emptyHTML('box', 'Nothing to borrow', state.search || state.mineOnly ? 'No items match your filter.' : 'Offer something you own — the mohalla will thank you.', 'Offer an item', 'add-borrow');
+  if (!list.length) return html + emptyHTML('box', 'Nothing to borrow', state.search || state.mineOnly ? 'No items match your filter.' : 'Offer something you own — the mohalla will thank you.', 'Offer an item', 'add-borrow', !state.borrows.length && !state.search && !state.mineOnly);
   const avail = list.filter(b => b.status === 'available'), out = list.filter(b => b.status === 'borrowed');
   html += '<div class="board">';
   if (avail.length) html += '<div class="board-label">Available to borrow · ' + avail.length + '</div>';
@@ -242,7 +246,7 @@ function borrowCard(b, i){
 function renderLostFound(){
   const list = applyFilters(state.lostfound).sort((a, b) => (a.resolved - b.resolved) || (b.date < a.date ? -1 : 1));
   let html = pageHead('Lost & Found', 'Lost something? Found something? The board reunites.', 'Post an item', 'add-lf');
-  if (!list.length) return html + emptyHTML('alert', 'All reunited', state.search || state.mineOnly ? 'No posts match your filter.' : 'Nothing lost or found right now. Long may it continue.', 'Post an item', 'add-lf');
+  if (!list.length) return html + emptyHTML('alert', 'All reunited', state.search || state.mineOnly ? 'No posts match your filter.' : 'Nothing lost or found right now. Long may it continue.', 'Post an item', 'add-lf', !state.lostfound.length && !state.search && !state.mineOnly);
   const open = list.filter(f => !f.resolved), done = list.filter(f => f.resolved);
   html += '<div class="board">';
   if (open.length) html += '<div class="board-label">Open · ' + open.length + '</div>';
@@ -267,6 +271,20 @@ function pageHead(title, sub, btnLabel, btnAct){
   return '<div class="page-head"><div><h1>' + esc(title) + '</h1><p>' + esc(sub) + '</p></div>' +
     '<button class="btn btn-primary" data-act="' + btnAct + '">' + icon('plus') + esc(btnLabel) + '</button></div>';
 }
+/* ================= settings ================= */
+function renderSettings(){
+  let html = '<div class="page-head"><div><h1>Settings</h1><p>Manage your board data. Everything is stored in this browser — nothing leaves your device.</p></div></div>';
+  html += '<article class="note" style="max-width:620px">' +
+    '<div class="note-top"><h3>Your data</h3></div>' +
+    '<p class="body">Sample data pins a few notices, listings, lends and lost-and-found posts, so you can see the board in action before posting your own.</p>' +
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0">' +
+    '<button class="btn btn-outline" data-act="load-sample">' + icon('box') + 'Load sample data</button>' +
+    '<button class="btn btn-danger" data-act="clear-all">' + icon('trash') + 'Clear all data</button></div>' +
+    '<p class="body" style="color:var(--mute);font-size:13px;margin:0">Clearing removes every notice, listing, lend and post. This cannot be undone.</p>' +
+    '</article>';
+  return html;
+}
+
 function render(){
   $$('#tabs .tab').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === state.tab ? 'true' : 'false'));
   $('[data-cnt="notices"]').textContent = state.notices.length;
@@ -274,7 +292,7 @@ function render(){
   $('[data-cnt="borrow"]').textContent = state.borrows.filter(b => b.status === 'available').length;
   $('[data-cnt="lostfound"]').textContent = state.lostfound.filter(f => !f.resolved).length;
   const v = $('#view');
-  const fn = { notices: renderNotices, listings: renderListings, borrow: renderBorrow, lostfound: renderLostFound }[state.tab] || renderNotices;
+  const fn = { notices: renderNotices, listings: renderListings, borrow: renderBorrow, lostfound: renderLostFound, settings: renderSettings }[state.tab] || renderNotices;
   v.innerHTML = fn();
   saveAll();
 }
@@ -440,11 +458,17 @@ function onViewClick(e){
   else if (act === 'lf-reopen'){ setResolved(id, false); toast('Reopened'); render(); }
   else if (act === 'lf-edit'){ const f = finders.lf(); if (f) lfForm(f); }
   else if (act === 'lf-del'){ const f = finders.lf(); if (f) confirmDlg('Delete post', 'Delete "' + f.item + '"?').then(ok => { if (ok){ deleteLostFound(id); toast('Post deleted'); render(); } }); }
+  else if (act === 'load-sample'){ seed(); localStorage.setItem(NS + 'seeded', '1'); state.tab = 'notices'; state.search = ''; $('#search').value = ''; render(); toast('Sample data loaded'); }
+  else if (act === 'clear-all'){
+    confirmDlg('Clear all data', 'Delete everything — all notices, listings, lends and posts? This cannot be undone.', 'Clear all data')
+      .then(ok => { if (ok){ DB.wipe(); localStorage.removeItem(NS + 'seeded'); loadAll(); state.tab = 'notices'; state.search = ''; $('#search').value = ''; syncMineBtn(); render(); toast('All data cleared — fresh start'); } });
+  }
 }
 
 /* ================= boot ================= */
 function boot(){
-  if (!localStorage.getItem(NS + 'seeded')){ seed(); localStorage.setItem(NS + 'seeded', '1'); }
+  // Normal launch never seeds: the board starts empty for real use.
+  // Sample data is only loaded via Settings → "Load sample data" or the selftest.
   loadAll();
   wireEvents();
   syncMineBtn();
@@ -501,8 +525,9 @@ function runSelftest(){
   } catch (err) {
     if (!res.fail) res.fail = 'exception: ' + (err && err.message);
   }
-  // restore pristine seeded state so normal mode is untouched
-  try { DB.wipe(); seed(); localStorage.setItem(NS + 'seeded', '1'); loadAll(); state.tab = 'notices'; wireEvents(); syncMineBtn(); render(); } catch (e) {}
+  // leave the app EMPTY after selftest: wipe everything, drop the seeded flag, no re-seed.
+  // render() paints the empty app but saveAll() recreates empty keys, so wipe again after.
+  try { DB.wipe(); localStorage.removeItem(NS + 'seeded'); loadAll(); state.tab = 'notices'; wireEvents(); syncMineBtn(); render(); DB.wipe(); localStorage.removeItem(NS + 'seeded'); } catch (e) {}
   banner(res.pass, res.total, res.fail);
   return res;
 }

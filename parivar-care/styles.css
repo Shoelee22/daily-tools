@@ -286,3 +286,18 @@ button{font:inherit;cursor:pointer}
   .brand-name{font-size:1.2rem}
   .page{padding:1.6rem 1rem 4rem}
 }
+
+/* ---------- settings: your data ---------- */
+.settings-actions{display:flex;gap:.9rem;flex-wrap:wrap;margin:1.2rem 0}
+.settings-note{color:var(--ink-soft);font-size:.95rem;margin-top:.6rem}
+
+/* ---------- toast: quiet confirmation ---------- */
+.toast{
+  position:fixed;left:50%;bottom:1.6rem;transform:translate(-50%,10px);opacity:0;z-index:100;
+  background:rgba(29,29,31,.92);color:#fff;font-size:.95rem;font-weight:500;
+  padding:.8rem 1.4rem;border-radius:var(--radius-pill);
+  box-shadow:0 8px 24px rgba(0,0,0,.18);pointer-events:none;
+  transition:opacity 300ms var(--ease),transform 300ms var(--ease);
+  max-width:min(90vw,480px);text-align:center;
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}

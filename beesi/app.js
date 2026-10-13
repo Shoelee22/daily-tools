@@ -25,7 +25,8 @@ const ICONS = {
   box:'<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/>',
   phone:'<path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.13.96.36 1.9.7 2.8a2 2 0 01-.45 2.1L8.1 9.9a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.45c.9.34 1.84.57 2.8.7A2 2 0 0122 16.9z"/>',
   clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
-  arrow:'<path d="M5 12h14M12 5l7 7-7 7"/>'
+  arrow:'<path d="M5 12h14M12 5l7 7-7 7"/>',
+  sliders:'<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>'
 };
 const icon = (n, cls) => '<svg class="ic ' + (cls || '') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICONS[n] || '') + '</svg>';
 $$('.tab-ic').forEach(el => { el.innerHTML = icon(el.dataset.ic); });
@@ -360,7 +361,9 @@ function renderDashboard(){
 
 function noGroupHTML(){
   return '<div class="empty">' + icon('box') + '<h3>No groups yet</h3><p>Create your first beesi group to start tracking collections and payouts.</p>' +
-    '<button class="btn btn-primary" data-act="add-group">' + icon('plus') + 'Create group</button></div>';
+    '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">' +
+    '<button class="btn btn-primary" data-act="add-group">' + icon('plus') + 'Create group</button>' +
+    '<button class="btn btn-ghost" data-act="load-sample">Explore with sample data</button></div></div>';
 }
 
 /* ---- collections ---- */
@@ -438,7 +441,7 @@ function renderMembers(){
   const dm = dueMonths(g);
   let html = '<div class="page-head"><div><h1>Members</h1><p>' + mems.length + ' members in ' + esc(g.name) + '. Phone numbers must be 10 digits.</p></div>' +
     '<button class="btn btn-primary" data-act="add-member">' + icon('plus') + 'Add member</button></div>';
-  if (!mems.length) return html + '<div class="empty">' + icon('users') + '<h3>No members yet</h3><p>Add the first member of this beesi.</p></div>';
+  if (!mems.length) return html + '<div class="empty">' + icon('users') + '<h3>No members yet</h3><p>Add the first member of this beesi.</p><button class="btn btn-primary" data-act="add-member">' + icon('plus') + 'Add member</button></div>';
   html += '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>#</th><th>Name</th><th>Phone</th><th class="num">Paid (due months)</th><th></th></tr></thead><tbody>';
   mems.forEach((m, i) => {
     const paidN = dm.filter(ym => { const r = getRecord(g.id, m.id, ym); return r && r.paid; }).length;
@@ -492,10 +495,23 @@ function renderDefaulters(){
   return html;
 }
 
+/* ---- settings ---- */
+function renderSettings(){
+  let html = '<div class="page-head"><div><h1>Settings</h1><p>Manage your Beesi data. Everything is stored in this browser — nothing leaves your device.</p></div></div>';
+  html += '<div class="section"><div class="card"><h2>Your data</h2>' +
+    '<p style="color:var(--muted);margin:0 0 16px">Sample data loads a ready-made beesi group — 10 members, three months of collections and a payout rotation — so you can explore before entering your own.</p>' +
+    '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
+    '<button class="btn btn-outline" data-act="load-sample">' + icon('box') + 'Load sample data</button>' +
+    '<button class="btn btn-danger" data-act="clear-all">' + icon('trash') + 'Clear all data</button></div>' +
+    '<p style="color:var(--muted);font-size:13px;margin:14px 0 0">Clearing removes every group, member, collection and payout. This cannot be undone.</p>' +
+    '</div></div>';
+  return html;
+}
+
 function render(){
   renderTabs(); renderGroupSelect(); renderGroupStrip();
   const v = $('#view');
-  const fn = { dashboard: renderDashboard, collections: renderCollections, payouts: renderPayouts, members: renderMembers, groups: renderGroups, defaulters: renderDefaulters }[state.tab] || renderDashboard;
+  const fn = { dashboard: renderDashboard, collections: renderCollections, payouts: renderPayouts, members: renderMembers, groups: renderGroups, defaulters: renderDefaulters, settings: renderSettings }[state.tab] || renderDashboard;
   v.innerHTML = fn();
   saveAll();
 }
@@ -599,6 +615,11 @@ function onViewClick(e){
   else if (act === 'group-edit'){ const gg = state.groups.find(x => x.id === id); if (gg) groupForm(gg); }
   else if (act === 'group-del'){ const gg = state.groups.find(x => x.id === id); if (gg) confirmDlg('Delete group', 'Delete "' + gg.name + '" and ALL its members, collections and payouts? This cannot be undone.').then(ok => { if (ok){ deleteGroup(id); toast('Group deleted'); render(); } }); }
   else if (act === 'goto-collect'){ state.activeMonth = el.dataset.ym; state.tab = 'collections'; render(); }
+  else if (act === 'load-sample'){ seed(); localStorage.setItem(NS + 'seeded', '1'); loadAll(); state.tab = 'dashboard'; render(); toast('Sample data loaded'); }
+  else if (act === 'clear-all'){
+    confirmDlg('Clear all data', 'Delete everything — all groups, members, collections and payouts? This cannot be undone.', 'Clear all data')
+      .then(ok => { if (ok){ DB.wipe(); localStorage.removeItem(NS + 'seeded'); loadAll(); state.tab = 'dashboard'; render(); toast('All data cleared — fresh start'); } });
+  }
 }
 function onViewChange(e){
   const t = e.target;
@@ -608,7 +629,8 @@ function onViewChange(e){
 
 /* ================= boot ================= */
 function boot(){
-  if (!localStorage.getItem(NS + 'seeded')){ seed(); localStorage.setItem(NS + 'seeded', '1'); }
+  // Normal launch never seeds: the app starts empty for real use.
+  // Sample data is only loaded via Settings → "Load sample data" or the selftest.
   loadAll();
   wireEvents();
   render();
@@ -671,8 +693,9 @@ function runSelftest(){
   } catch (err) {
     if (!res.fail) res.fail = 'exception: ' + (err && err.message);
   }
-  // restore pristine seeded state so normal mode is untouched
-  try { DB.wipe(); seed(); localStorage.setItem(NS + 'seeded', '1'); loadAll(); render(); } catch (e) {}
+  // leave the app EMPTY after selftest: wipe everything, drop the seeded flag, no re-seed.
+  // render() paints the empty app but saveAll() recreates empty keys, so wipe again after.
+  try { DB.wipe(); localStorage.removeItem(NS + 'seeded'); loadAll(); render(); DB.wipe(); localStorage.removeItem(NS + 'seeded'); } catch (e) {}
   banner(res.pass, res.total, res.fail);
   return res;
 }

@@ -95,8 +95,9 @@ var Store = {
 };
 
 /* ---------------- seed ---------------- */
-function seedIfNeeded(){
-  if(localStorage.getItem(K.seeded)) return;
+/* Explicit-only sample data: called from Settings ("Load sample data") and the
+   selftest (?selftest=1). Never auto-run on normal boot. */
+function seedSample(){
   function mk(name, trade, area, rate, phone, rating, count, jobs){
     return { id: uid('pro'), name:name, trade:trade, area:area, rate:rate, phone:phone,
              ratingSum: Math.round(rating*count*10)/10, ratingCount: count, jobsDone: jobs };
@@ -135,6 +136,30 @@ function seedIfNeeded(){
 
   Store.savePros(); Store.saveBookings();
   localStorage.setItem(K.seeded,'1');
+}
+
+/* ---------------- data management ---------------- */
+/* Wipes every key in this app's namespace (pros, bookings AND the seeded flag,
+   which carries the same NS prefix). Returns the number of keys removed. */
+function wipeNamespace(){
+  var ks=[];
+  for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k&&k.indexOf(NS)===0) ks.push(k); }
+  ks.forEach(function(k){ localStorage.removeItem(k); });
+  return ks.length;
+}
+function loadSampleData(){
+  var hasData = Store.pros.length||Store.bookings.length;
+  if(hasData && !confirm('You already have data in GharSeva. Replace it with sample data?')) return;
+  seedSample();
+  render();
+  toast('Sample data loaded');
+}
+function clearAllData(){
+  if(!confirm('Delete ALL data — every pro and booking — and start fresh? This cannot be undone.')) return;
+  wipeNamespace();
+  Store.load();
+  setView('directory');
+  toast('All data cleared — fresh start');
 }
 
 /* ---------------- toast ---------------- */
@@ -216,6 +241,7 @@ function render(){
   if(currentView==='directory') renderDirectory();
   else if(currentView==='book') renderWizard();
   else if(currentView==='bookings') renderBookings();
+  else if(currentView==='settings') renderSettings();
 }
 function updateBookingBadge(){
   var n = Store.bookings.filter(function(b){ return b.status!=='completed' && b.status!=='cancelled'; }).length;
@@ -262,12 +288,16 @@ function renderDirectory(){
       '<div class="trade-tabs" style="margin-bottom:0">'+tabs+'</div>'+
       '<button class="btn navy" id="add-pro-btn" type="button">+ List your service</button>'+
     '</div>'+
-    '<div class="pro-grid">'+(cards || '<div class="empty-state"><h3>No pros in this trade yet</h3><p>List your service to be the first.</p></div>')+'</div>';
+    '<div class="pro-grid">'+(cards || '<div class="empty-state"><h3>'+(Store.pros.length?'No pros in this trade yet':'No pros listed yet')+'</h3>'+
+    '<p>'+(Store.pros.length?'List your service to be the first.':'Add your first pro to start taking bookings.')+'</p>'+
+    '<button class="btn primary" id="dir-add-first" type="button">'+(Store.pros.length?'List your service':'Add your first pro')+'</button></div>')+'</div>';
 
   el.querySelectorAll('.trade-tab').forEach(function(t){
     t.onclick = function(){ currentTrade = t.dataset.trade; renderDirectory(); };
   });
   document.getElementById('add-pro-btn').onclick = openProModal;
+  var dirFirst = document.getElementById('dir-add-first');
+  if(dirFirst) dirFirst.onclick = openProModal;
   el.querySelectorAll('.pro-card').forEach(function(card){
     card.querySelector('[data-book]').onclick = function(){ startBooking(card.dataset.id); };
   });
@@ -498,27 +528,38 @@ function openRatingModal(id){
   });
 }
 
+/* ----- settings ----- */
+function renderSettings(){
+  var el = document.getElementById('view-settings');
+  var n = Store.pros.length+Store.bookings.length;
+  el.innerHTML =
+    '<div class="wizard" style="max-width:640px">'+
+    '<h2>Settings</h2><p class="wiz-sub">Sample data and data management.</p>'+
+    '<h2 style="font-size:18px">Sample data</h2>'+
+    '<p class="wiz-sub">Load a demo directory — verified pros and past bookings — to explore GharSeva. '+
+    (n ? 'You already have '+n+' record'+(n===1?'':'s')+'; loading will replace them after a confirmation.' : 'Your data is currently empty.')+'</p>'+
+    '<button class="btn navy" id="set-sample" type="button">Load sample data</button>'+
+    '<h2 style="font-size:18px;margin-top:28px">Start fresh</h2>'+
+    '<p class="wiz-sub">Delete every pro and booking stored in this browser. This cannot be undone.</p>'+
+    '<button class="btn danger" id="set-clear" type="button">Clear all data</button>'+
+    '</div>';
+  document.getElementById('set-sample').onclick = loadSampleData;
+  document.getElementById('set-clear').onclick = clearAllData;
+}
+
 /* ---------------- selftest ---------------- */
 function runSelftest(){
   var checks = [];
   var failReason = '';
   function check(name, ok){ checks.push([name, !!ok]); if(!ok && !failReason) failReason = name; }
 
-  var backup = {};
+  // the selftest owns the whole namespace: wipe → seed → assert → wipe.
+  // normal-mode data is NOT preserved under ?selftest=1; the app is left EMPTY.
   var startView = currentView;
-  for(var i=0;i<localStorage.length;i++){
-    var k = localStorage.key(i);
-    if(k && k.indexOf(NS)===0) backup[k]=localStorage.getItem(k);
-  }
-  function wipeNS(){
-    var ks=[];
-    for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k&&k.indexOf(NS)===0) ks.push(k); }
-    ks.forEach(function(k){ localStorage.removeItem(k); });
-  }
 
   try{
-    wipeNS();
-    seedIfNeeded();
+    wipeNamespace();
+    seedSample();
     check('seed flag set', localStorage.getItem(K.seeded)==='1');
     check('9 pros seeded', Store.pros.length===9);
     check('3 trades covered', TRADES.every(function(t){return Store.pros.some(function(p){return p.trade===t;});}));
@@ -565,9 +606,11 @@ function runSelftest(){
   }catch(e){
     check('no exception thrown ('+(e&&e.message||e)+')', false);
   }finally{
-    wipeNS();
-    Object.keys(backup).forEach(function(k){ localStorage.setItem(k, backup[k]); });
+    // leave the app EMPTY: wipe everything (seeded flag included), no re-seed
+    wipeNamespace();
     Store.load();
+    check('namespace fully wiped incl. seeded flag',
+      !localStorage.getItem(K.seeded) && !localStorage.getItem(K.pros) && !localStorage.getItem(K.bookings));
     setView(startView);
   }
 
@@ -579,15 +622,13 @@ function runSelftest(){
   var banner = document.getElementById('selftest-banner');
   banner.hidden = false;
   banner.className = ok ? 'pass' : 'fail';
-  banner.textContent = title + (ok ? '' : ' — normal data restored, app intact');
+  banner.textContent = title + (ok ? '' : ' — app left empty, intact');
   return ok;
 }
 
 /* ---------------- boot ---------------- */
 function boot(){
-  Store.load();
-  seedIfNeeded();
-  Store.load();
+  Store.load(); // no auto-seed: the app starts clean; sample data is opt-in via Settings
   document.querySelectorAll('.nav-btn').forEach(function(b){
     b.addEventListener('click', function(){ setView(b.dataset.view); });
   });

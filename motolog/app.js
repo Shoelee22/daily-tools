@@ -43,6 +43,7 @@ const ICONS = {
   alert: I('<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>'),
   check: I('<path d="M20 6 9 17l-5-5"/>'),
   clock: I('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
+  gear:  I('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.01a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55h.01a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.01a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/>'),
 };
 
 /* ---------------- store ---------------- */
@@ -55,8 +56,14 @@ const Store = {
       const raw = localStorage.getItem(NS + 'data');
       this.data = raw ? JSON.parse(raw) : null;
     } catch(e){ this.data = null; }
-    if(!this.data || !Array.isArray(this.data.vehicles)){ this.seed(); }
+    if(!this.data || !Array.isArray(this.data.vehicles)){ this.initEmpty(); }
     return this.data;
+  },
+  /* Fresh start: empty store with the correct shape. Normal launch NEVER seeds. */
+  initEmpty(){
+    this.data = { vehicles:[], documents:[], fuel:[], services:[] };
+    localStorage.removeItem(NS + 'seeded');
+    this.save();
   },
   save(){ localStorage.setItem(NS + 'data', JSON.stringify(this.data)); },
   wipe(){ Object.keys(localStorage).filter(k => k.startsWith(NS)).forEach(k => localStorage.removeItem(k)); },
@@ -344,6 +351,7 @@ const NAV = [
   { id:'documents', label:'Documents' },
   { id:'fuel',      label:'Fuel Log' },
   { id:'service',   label:'Service' },
+  { id:'settings',  label:'Settings' },
 ];
 function renderNav(){
   $('#mainnav').innerHTML = NAV.map(n =>
@@ -402,7 +410,8 @@ function vDashboard(){
     meterCard('Total spend', fmtINR(f.total), 'fuel + service') +
   '</div>';
   if(!vs.length){
-    h += '<div class="empty"><h3>No vehicles</h3><p>Add your first vehicle to start logging fuel and tracking documents.</p></div>';
+    h += '<div class="empty"><h3>No vehicles</h3><p>Add your first vehicle to start logging fuel and tracking documents.</p>' +
+      '<button class="btn btn-primary" data-act="add-vehicle">' + ICONS.plus + 'Add vehicle</button></div>';
     return h;
   }
   h += '<div class="grid2">' + vs.map(v => {
@@ -461,7 +470,8 @@ function vVehicles(){
   let h = '<div class="pagehead"><div><h1>Vehicles</h1><p>Your garage. Deleting a vehicle removes its fuel, service and document records too.</p></div>' +
     '<div class="toolbar"><button class="btn btn-primary" data-act="add-vehicle">' + ICONS.plus + 'Add vehicle</button></div></div>';
   if(!vs.length){
-    h += '<div class="empty"><h3>No vehicles</h3><p>Add your first vehicle to start logging.</p></div>';
+    h += '<div class="empty"><h3>No vehicles</h3><p>Add a vehicle to start logging.</p>' +
+      '<button class="btn btn-primary" data-act="add-vehicle">' + ICONS.plus + 'Add vehicle</button></div>';
     return h;
   }
   h += '<div class="panel">' + vs.map(v => {
@@ -523,7 +533,8 @@ function vDocuments(){
   let h = '<div class="pagehead"><div><h1>Documents</h1><p>RC, insurance and PUC expiry tracking. Red means expired, amber means due within 30 days.</p></div>' +
     '<div class="toolbar"><button class="btn btn-primary" data-act="add-doc">' + ICONS.plus + 'Add document</button></div></div>';
   if(!vs.length){
-    h += '<div class="empty"><h3>No vehicles</h3><p>Add a vehicle before tracking documents.</p></div>';
+    h += '<div class="empty"><h3>No vehicles</h3><p>Add a vehicle before tracking documents.</p>' +
+      '<button class="btn btn-primary" data-act="add-vehicle">' + ICONS.plus + 'Add vehicle</button></div>';
     return h;
   }
   const list = state.vehicleTab === 'all' ? vs : vs.filter(v => v.id === state.vehicleTab);
@@ -584,7 +595,8 @@ function vFuel(){
   let h = '<div class="pagehead"><div><h1>Fuel Log</h1><p>Every fill-up. Mileage is computed fill-to-fill; the running average covers total distance over total fuel.</p></div>' +
     '<div class="toolbar"><button class="btn btn-primary" data-act="add-fill">' + ICONS.plus + 'Log fill</button></div></div>';
   if(!vs.length){
-    h += '<div class="empty"><h3>No vehicles</h3><p>Add a vehicle before logging fuel.</p></div>';
+    h += '<div class="empty"><h3>No vehicles</h3><p>Add a vehicle before logging fuel.</p>' +
+      '<button class="btn btn-primary" data-act="add-vehicle">' + ICONS.plus + 'Add vehicle</button></div>';
     return h;
   }
   h += '<div class="toolbar" style="margin-bottom:14px"><label for="fuel-filter" style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)">Vehicle</label>' +
@@ -662,7 +674,8 @@ function vService(){
   let h = '<div class="pagehead"><div><h1>Service History</h1><p>Repairs, services and their cost. Total spend feeds the dashboard.</p></div>' +
     '<div class="toolbar"><button class="btn btn-primary" data-act="add-service">' + ICONS.plus + 'Add service</button></div></div>';
   if(!vs.length){
-    h += '<div class="empty"><h3>No vehicles</h3><p>Add a vehicle before logging service.</p></div>';
+    h += '<div class="empty"><h3>No vehicles</h3><p>Add a vehicle before logging service.</p>' +
+      '<button class="btn btn-primary" data-act="add-vehicle">' + ICONS.plus + 'Add vehicle</button></div>';
     return h;
   }
   h += '<div class="toolbar" style="margin-bottom:14px"><label for="svc-filter" style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)">Vehicle</label>' +
@@ -729,6 +742,29 @@ function openServiceModal(presetVehicleId){
   });
 }
 
+/* ---------------- view: settings ---------------- */
+function vSettings(){
+  const d = Store.data;
+  const counts = [
+    ['Vehicles', d.vehicles.length], ['Documents', d.documents.length],
+    ['Fuel fills', d.fuel.length], ['Service records', d.services.length],
+  ];
+  let h = '<div class="pagehead"><div><h1>Settings</h1><p>Data management. Everything is stored privately in this browser — nothing leaves your device.</p></div></div>';
+  h += '<div class="panel" style="margin-bottom:18px"><div class="panel-h"><h2>Your data</h2></div><div class="panel-b">' +
+    '<div class="statlist">' + counts.map(c => stat(c[0], String(c[1]), '')).join('') + '</div>' +
+    '<p class="sub" style="margin:10px 0 0">Stored in this browser\u2019s localStorage under <b style="font-family:var(--font-num)">' + esc(NS + 'data') + '</b>. Clearing browser data will remove it.</p>' +
+    '</div></div>';
+  h += '<div class="panel" style="margin-bottom:18px"><div class="panel-h"><h2>Sample data</h2></div><div class="panel-b">' +
+    '<p class="sub" style="margin:0 0 14px">Explore MotoLog with a demo garage — two vehicles, documents, fuel fills and service history.</p>' +
+    '<button class="btn btn-primary" data-act="load-sample">' + ICONS.plus + 'Load sample data</button>' +
+    '</div></div>';
+  h += '<div class="panel"><div class="panel-h"><h2 style="color:#e0645a">Danger zone</h2></div><div class="panel-b">' +
+    '<p class="sub" style="margin:0 0 14px">Delete everything and start fresh. This cannot be undone.</p>' +
+    '<button class="btn btn-ghost" style="color:#e0645a;border-color:#e0645a" data-act="clear-data">' + ICONS.trash + 'Clear all data</button>' +
+    '</div></div>';
+  return h;
+}
+
 /* ---------------- views registry ---------------- */
 const Views = {
   dashboard: Object.assign(vDashboard, { mount: mountDashboard }),
@@ -744,6 +780,7 @@ const Views = {
   }}),
   documents: Object.assign(vDocuments, { mount(root){
     root.querySelectorAll('[data-act="add-doc"]').forEach(b => b.addEventListener('click', () => openDocModal()));
+    root.querySelectorAll('[data-act="add-vehicle"]').forEach(b => b.addEventListener('click', () => openVehicleModal()));
     const sel = root.querySelector('#doc-filter');
     if(sel) sel.addEventListener('change', () => { state.vehicleTab = sel.value; render(); });
     root.querySelectorAll('[data-edit-doc]').forEach(b => b.addEventListener('click', () => {
@@ -757,6 +794,7 @@ const Views = {
   }}),
   fuel: Object.assign(vFuel, { mount(root){
     root.querySelectorAll('[data-act="add-fill"]').forEach(b => b.addEventListener('click', () => openFillModal(state.vehicleTab !== 'all' ? state.vehicleTab : null)));
+    root.querySelectorAll('[data-act="add-vehicle"]').forEach(b => b.addEventListener('click', () => openVehicleModal()));
     root.querySelectorAll('[data-fill-for]').forEach(b => b.addEventListener('click', () => openFillModal(b.dataset.fillFor)));
     const sel = root.querySelector('#fuel-filter');
     if(sel) sel.addEventListener('change', () => { state.vehicleTab = sel.value; render(); });
@@ -767,12 +805,25 @@ const Views = {
   }}),
   service: Object.assign(vService, { mount(root){
     root.querySelectorAll('[data-act="add-service"]').forEach(b => b.addEventListener('click', () => openServiceModal(state.vehicleTab !== 'all' ? state.vehicleTab : null)));
+    root.querySelectorAll('[data-act="add-vehicle"]').forEach(b => b.addEventListener('click', () => openVehicleModal()));
     root.querySelectorAll('[data-svc-for]').forEach(b => b.addEventListener('click', () => openServiceModal(b.dataset.svcFor)));
     const sel = root.querySelector('#svc-filter');
     if(sel) sel.addEventListener('change', () => { state.vehicleTab = sel.value; render(); });
     root.querySelectorAll('[data-del-svc]').forEach(b => b.addEventListener('click', () => {
       if(!confirm('Delete this service record?')) return;
       Biz.deleteService(b.dataset.delSvc); render(); toast('Service record deleted');
+    }));
+  }}),
+  settings: Object.assign(vSettings, { mount(root){
+    root.querySelectorAll('[data-act="load-sample"]').forEach(b => b.addEventListener('click', () => {
+      const d = Store.data;
+      const has = d.vehicles.length || d.documents.length || d.fuel.length || d.services.length;
+      if(has && !confirm('Replace your current data with sample data?')) return;
+      Store.seed(); render(); toast('Sample data loaded');
+    }));
+    root.querySelectorAll('[data-act="clear-data"]').forEach(b => b.addEventListener('click', () => {
+      if(!confirm('Delete ALL data and start fresh? This cannot be undone.')) return;
+      Store.wipe(); Store.load(); state.vehicleTab = 'all'; render(); toast('All data cleared — starting fresh');
     }));
   }}),
 };
@@ -850,8 +901,8 @@ function runSelfTest(){
   banner.innerHTML = '<b>' + esc(title) + '</b><ul>' +
     results.map(r => '<li class="' + (r.ok?'ok':'bad') + '">' + (r.ok?'PASS':'FAIL') + ' — ' + esc(r.name) + (r.detail ? ' <span style="opacity:.75">(' + esc(r.detail) + ')</span>' : '') + '</li>').join('') +
     '</ul>';
-  // leave app in a clean, freshly-seeded state so normal mode is uncorrupted
-  try{ Store.wipe(); Store.seed(); state.view = 'dashboard'; state.vehicleTab = 'all'; }catch(e){}
+  // leave app in a clean, empty state so normal mode starts fresh
+  try{ Store.wipe(); state.view = 'dashboard'; state.vehicleTab = 'all'; }catch(e){}
   return { pass, total:results.length, fail:fail.length };
 }
 

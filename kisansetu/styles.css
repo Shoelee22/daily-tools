@@ -270,3 +270,21 @@ table.ledger{width:100%;border-collapse:collapse;font-size:1rem;min-width:560px}
   .board .price{font-size:2rem}
   .page{padding:1.6rem 1rem 3rem}
 }
+
+/* ---------- settings: your data ---------- */
+.settings-card{background:var(--card);border-radius:var(--radius-card);box-shadow:var(--shadow-card);padding:1.5rem}
+.settings-card h2{font-size:1.25rem;margin-bottom:.4rem;color:var(--leaf)}
+.settings-card .sub{color:var(--ink-soft)}
+.settings-actions{display:flex;gap:.8rem;flex-wrap:wrap;margin:1.2rem 0}
+.settings-note{color:var(--ink-soft);font-size:.92rem;margin-top:.6rem}
+
+/* ---------- toast: warm confirmation ---------- */
+.toast{
+  position:fixed;left:50%;bottom:1.6rem;transform:translate(-50%,10px);opacity:0;z-index:100;
+  background:var(--pine);color:var(--chalk);font-size:.95rem;font-weight:600;
+  padding:.8rem 1.4rem;border-radius:var(--radius-pill);
+  box-shadow:var(--shadow-float);pointer-events:none;
+  transition:opacity 300ms var(--press),transform 300ms var(--press);
+  max-width:min(90vw,480px);text-align:center;
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}

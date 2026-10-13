@@ -64,6 +64,7 @@ const ICONS = {
   alert:  I('<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>'),
   check:  I('<path d="M20 6 9 17l-5-5"/>'),
   receipt:I('<path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M8 7h8M8 11h8M8 15h5"/>'),
+  gear:  I('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.01a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55h.01a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.01a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/>'),
 };
 
 /* ---------------- store ---------------- */
@@ -75,8 +76,14 @@ const Store = {
       const raw = localStorage.getItem(NS + 'data');
       this.data = raw ? JSON.parse(raw) : null;
     } catch(e){ this.data = null; }
-    if(!this.data || !Array.isArray(this.data.tenants)){ this.seed(); }
+    if(!this.data || !Array.isArray(this.data.tenants)){ this.initEmpty(); }
     return this.data;
+  },
+  /* Fresh start: empty store with the correct shape. Normal launch NEVER seeds. */
+  initEmpty(){
+    this.data = { seq:1, properties:[], tenants:[], payments:[] };
+    localStorage.removeItem(NS + 'seeded');
+    this.save();
   },
   save(){ localStorage.setItem(NS + 'data', JSON.stringify(this.data)); },
   wipe(){ Object.keys(localStorage).filter(k => k.startsWith(NS)).forEach(k => localStorage.removeItem(k)); },
@@ -296,6 +303,7 @@ const NAV = [
   { id:'tenants', label:'Tenants' },
   { id:'rentbook', label:'Rent Book' },
   { id:'ledger', label:'Ledger' },
+  { id:'settings', label:'Settings' },
 ];
 function pill(status){
   const map = { paid:'Paid', partial:'Partial', due:'Due' };
@@ -346,6 +354,13 @@ function vOverview(){
     statCard('Total outstanding', fmtINR(f.outstanding), f.outstanding > 0 ? 'unpaid across months' : 'nothing pending — all clear', 'accent-red') +
     statCard('Defaulters', String(f.defaulters), f.defaulters ? 'tenants past due date' : 'no overdue tenants', 'accent-slate') +
   '</div>';
+
+  if(!f.tenantCount){
+    // first-run: no data at all — intentional empty state with CTAs
+    h += '<div class="empty" style="margin-top:20px"><h3>Welcome to Kiraya</h3><p>Add your first property, then a tenant — Kiraya builds their monthly rent schedule automatically.</p>' +
+      '<button class="btn btn-primary" data-act="add-prop">' + ICONS.plus + 'Add property</button></div>';
+    return h;
+  }
 
   h += '<div class="grid2" style="margin-top:20px">';
   // due this month
@@ -401,6 +416,8 @@ function statCard(k, v, s, accent){
 function mountCommon(root){
   root = root || document;
   root.querySelectorAll('[data-act="pay"]').forEach(b => b.addEventListener('click', () => openPaymentModal()));
+  root.querySelectorAll('[data-act="add-prop"]').forEach(b => b.addEventListener('click', () => openPropertyModal()));
+  root.querySelectorAll('[data-act="add-tenant"]').forEach(b => b.addEventListener('click', () => openTenantModal()));
   root.querySelectorAll('[data-pay-tenant]').forEach(b => b.addEventListener('click', () =>
     openPaymentModal(b.dataset.payTenant, b.dataset.payMonth)));
   root.querySelectorAll('[data-receipt]').forEach(b => b.addEventListener('click', () =>
@@ -487,6 +504,7 @@ function vTenants(){
 }
 function openTenantModal(t){
   const isNew = !t;
+  if(isNew && !Store.data.properties.length){ toast('Add a property first', true); return; }
   t = t || { name:'', phone:'', propertyId:Store.data.properties[0] ? Store.data.properties[0].id : '', rent:'', deposit:'', moveIn:todayISO() };
   const ov = openModal(isNew ? 'Add tenant' : 'Edit tenant',
     '<form id="tenant-form" novalidate><div class="formgrid">' +
@@ -530,6 +548,8 @@ function openTenantModal(t){
 /* ---------------- view: rent book ---------------- */
 function vRentBook(){
   const tenants = Store.data.tenants;
+  // stale filter (e.g. tenant was deleted) falls back to "all"
+  if(state.bookFilter !== 'all' && !tenants.some(t => t.id === state.bookFilter)) state.bookFilter = 'all';
   const opts = [{value:'all',label:'All tenants'}].concat(tenants.map(t => ({value:t.id,label:t.name})));
   let h = '<div class="pagehead"><div><h1>Rent Book</h1><p>Month-by-month rent schedule per tenant. Record full or partial payments against any month.</p></div>' +
     '<div class="toolbar"><label class="sr" for="book-filter" style="font-size:13px;font-weight:700;color:var(--muted)">Tenant</label>' +
@@ -538,7 +558,7 @@ function vRentBook(){
     '</select><button class="btn btn-gold" data-act="pay">' + ICONS.cash + 'Record payment</button></div></div>';
   const list = state.bookFilter === 'all' ? tenants : tenants.filter(t => t.id === state.bookFilter);
   if(!list.length){
-    h += '<div class="empty"><h3>No tenants</h3><p>Add a tenant to generate a rent schedule.</p></div>';
+    h += '<div class="empty"><h3>No tenants</h3><p>Add a tenant to generate a rent schedule.</p><button class="btn btn-primary" data-act="add-tenant">' + ICONS.plus + 'Add tenant</button></div>';
     return h;
   }
   list.forEach(t => {
@@ -571,7 +591,7 @@ function vLedger(){
   const tenants = Store.data.tenants;
   if(!tenants.length){
     return '<div class="pagehead"><div><h1>Ledger</h1></div></div>' +
-      '<div class="empty"><h3>No tenants</h3><p>Add a tenant to open their ledger.</p></div>';
+      '<div class="empty"><h3>No tenants</h3><p>Add a tenant to open their ledger.</p><button class="btn btn-primary" data-act="add-tenant">' + ICONS.plus + 'Add tenant</button></div>';
   }
   if(!state.ledgerTenant || !tenantById(state.ledgerTenant)) state.ledgerTenant = tenants[0].id;
   const t = tenantById(state.ledgerTenant);
@@ -713,6 +733,29 @@ function printReceipt(p){
   window.print();
 }
 
+/* ---------------- view: settings ---------------- */
+function vSettings(){
+  const d = Store.data;
+  const counts = [
+    ['Properties', d.properties.length], ['Tenants', d.tenants.length],
+    ['Payments', d.payments.length],
+  ];
+  let h = '<div class="pagehead"><div><h1>Settings</h1><p>Data management. Everything is stored privately in this browser — nothing leaves your device.</p></div></div>';
+  h += '<div class="panel" style="margin-bottom:18px"><div class="panel-h"><h2>Your data</h2></div><div class="panel-b">' +
+    '<div class="prop-meta">' + counts.map(c => '<span class="m"><b>' + c[1] + '</b> ' + c[0].toLowerCase() + '</span>').join('') + '</div>' +
+    '<p class="sub" style="margin:10px 0 0">Stored in this browser\u2019s localStorage under <b style="font-family:var(--font-num)">' + esc(NS + 'data') + '</b>. Clearing browser data will remove it.</p>' +
+    '</div></div>';
+  h += '<div class="panel" style="margin-bottom:18px"><div class="panel-h"><h2>Sample data</h2></div><div class="panel-b">' +
+    '<p class="sub" style="margin:0 0 14px">Explore Kiraya with a demo portfolio — two properties, three tenants and a full payment history.</p>' +
+    '<button class="btn btn-primary" data-act="load-sample">' + ICONS.plus + 'Load sample data</button>' +
+    '</div></div>';
+  h += '<div class="panel"><div class="panel-h"><h2 style="color:var(--red)">Danger zone</h2></div><div class="panel-b">' +
+    '<p class="sub" style="margin:0 0 14px">Delete everything and start fresh. This cannot be undone.</p>' +
+    '<button class="btn btn-danger-ghost" data-act="clear-data">' + ICONS.trash + 'Clear all data</button>' +
+    '</div></div>';
+  return h;
+}
+
 /* ---------------- views registry + global mounts ---------------- */
 const Views = {
   overview:  Object.assign(vOverview,  { mount: mountCommon }),
@@ -746,6 +789,18 @@ const Views = {
     mountCommon(root);
     const sel = root.querySelector('#ledger-sel');
     if(sel) sel.addEventListener('change', () => { state.ledgerTenant = sel.value; render(); });
+  }}),
+  settings:  Object.assign(vSettings,  { mount(root){
+    root.querySelectorAll('[data-act="load-sample"]').forEach(b => b.addEventListener('click', () => {
+      const d = Store.data;
+      const has = d.properties.length || d.tenants.length || d.payments.length;
+      if(has && !confirm('Replace your current data with sample data?')) return;
+      Store.seed(); state.ledgerTenant = null; state.bookFilter = 'all'; render(); toast('Sample data loaded');
+    }));
+    root.querySelectorAll('[data-act="clear-data"]').forEach(b => b.addEventListener('click', () => {
+      if(!confirm('Delete ALL data and start fresh? This cannot be undone.')) return;
+      Store.wipe(); Store.load(); state.ledgerTenant = null; state.bookFilter = 'all'; render(); toast('All data cleared — starting fresh');
+    }));
   }}),
 };
 function mountOverviewExtra(){
@@ -816,8 +871,8 @@ function runSelfTest(){
   banner.innerHTML = '<b>' + esc(title) + '</b><ul>' +
     results.map(r => '<li class="' + (r.ok?'ok':'bad') + '">' + (r.ok?'PASS':'FAIL') + ' — ' + esc(r.name) + (r.detail ? ' <span style="opacity:.75">(' + esc(r.detail) + ')</span>' : '') + '</li>').join('') +
     '</ul>';
-  // leave app in a clean, freshly-seeded state so normal mode is uncorrupted
-  try{ Store.wipe(); Store.seed(); state.view = 'overview'; state.bookFilter = 'all'; }catch(e){}
+  // leave app in a clean, empty state so normal mode starts fresh
+  try{ Store.wipe(); state.view = 'overview'; state.bookFilter = 'all'; }catch(e){}
   return { pass, total:results.length, fail:fail.length };
 }
 

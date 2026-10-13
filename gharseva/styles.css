@@ -68,6 +68,7 @@ input,select,textarea{font:inherit; color:var(--body)}
   border-radius:var(--r-pill); background:var(--orange); color:#fff;
   font-size:12px; font-weight:700; font-family:var(--mono);
 }
+.nav-badge[hidden]{display:none}
 
 /* ---------- page ---------- */
 .page{max-width:1280px; margin:0 auto; padding:32px 24px 80px; min-height:70vh}
@@ -245,6 +246,7 @@ input,select,textarea{font:inherit; color:var(--body)}
 .review-given .stars{margin-bottom:6px}
 .empty-state{text-align:center; padding:60px 20px; color:var(--muted)}
 .empty-state h3{color:var(--ink); margin-bottom:8px; font-weight:600}
+.empty-state .btn{margin-top:14px}
 
 /* ---------- modal ---------- */
 .modal-backdrop{

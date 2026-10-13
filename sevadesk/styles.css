@@ -89,6 +89,7 @@ input,select,textarea{font:inherit; color:var(--text)}
   font-size:12px; font-weight:700; font-family:var(--mono);
   display:inline-flex; align-items:center; justify-content:center;
 }
+.nav-badge[hidden]{display:none}
 .sidebar-foot{padding:16px 20px; border-top:1px solid var(--side-hair-soft)}
 .foot-note{margin:0; font-size:12px; color:var(--side-faint); line-height:1.55}
 
@@ -306,8 +307,14 @@ input,select,textarea{font:inherit; color:var(--text)}
 #selftest-banner.fail{background:#fee2e2; color:#7f1d1d; border-bottom:3px solid #dc2626}
 
 /* ---------- misc ---------- */
+.view{display:none}
+.view.is-active{display:block}
 .empty-state{text-align:center; padding:40px 20px; color:var(--muted)}
 .empty-state p{margin:6px 0 0; font-size:14px}
+.empty-state .btn{margin-top:16px}
+.board-empty{padding:70px 20px}
+.welcome-sub{color:var(--muted); font-size:14px; margin:0 0 16px}
+.welcome-actions{display:flex; gap:10px; flex-wrap:wrap}
 
 @media (max-width:1100px){
   .board{grid-template-columns:repeat(2,minmax(240px,1fr))}

@@ -142,8 +142,9 @@ function amcBucket(r){
 }
 
 /* ---------------- seed ---------------- */
-function seedIfNeeded(){
-  if(localStorage.getItem(K.seeded)) return;
+/* Explicit-only sample data: called from Settings ("Load sample data") and the
+   selftest (?selftest=1). Never auto-run on normal boot. */
+function seedSample(){
   var t1 = { id:'tech_seed1', name:'Ramesh Gupta',  phone:'9820012345', skills:['AC Repair','Refrigerator'] };
   var t2 = { id:'tech_seed2', name:'Suresh Yadav',  phone:'9811187654', skills:['Washing Machine','Geyser','Cooler'] };
   var t3 = { id:'tech_seed3', name:'Priya Sharma',  phone:'9833345678', skills:['AC Service','Microwave','Cooler'] };
@@ -171,6 +172,30 @@ function seedIfNeeded(){
 
   Store.saveTechs(); Store.saveJobs(); Store.saveAmc();
   localStorage.setItem(K.seeded,'1');
+}
+
+/* ---------------- data management ---------------- */
+/* Wipes every key in this app's namespace (jobs, techs, amc AND the seeded
+   flag, which carries the same NS prefix). Returns the number of keys removed. */
+function wipeNamespace(){
+  var ks=[];
+  for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k&&k.indexOf(NS)===0) ks.push(k); }
+  ks.forEach(function(k){ localStorage.removeItem(k); });
+  return ks.length;
+}
+function loadSampleData(){
+  var hasData = Store.jobs.length||Store.techs.length||Store.amc.length;
+  if(hasData && !confirm('You already have data in SevaDesk. Replace it with sample data?')) return;
+  seedSample();
+  render();
+  toast('Sample data loaded');
+}
+function clearAllData(){
+  if(!confirm('Delete ALL data — every job card, technician and AMC reminder — and start fresh? This cannot be undone.')) return;
+  wipeNamespace();
+  Store.load();
+  render();
+  toast('All data cleared — fresh start');
 }
 
 /* ---------------- toast ---------------- */
@@ -242,7 +267,8 @@ var viewTitles = {
   dashboard:['Dashboard','Today\u2019s shop floor at a glance'],
   board:['Job Board','Drag cards between stages, or use the arrows'],
   techs:['Technicians','Your field team and their workload'],
-  amc:['AMC Reminders','Never miss a scheduled service visit']
+  amc:['AMC Reminders','Never miss a scheduled service visit'],
+  settings:['Settings','Sample data and data management']
 };
 var currentView = 'dashboard';
 var amcFilter = 'all';
@@ -278,6 +304,7 @@ function render(){
   else if(currentView==='board') renderBoard();
   else if(currentView==='techs') renderTechs();
   else if(currentView==='amc') renderAmc();
+  else if(currentView==='settings') renderSettings();
 }
 function updateAmcBadge(){
   var n = Store.amc.filter(function(r){ var b=amcBucket(r); return b==='overdue'||b==='dueweek'; }).length;
@@ -309,20 +336,47 @@ function renderDashboard(){
       '<div class="workload-skills">'+esc(t.skills.join(', ')||'—')+'</div>'+
       '<div class="workload-bar" role="img" aria-label="'+esc(t.name)+' has '+n+' active jobs"><div class="workload-fill" style="width:'+pct+'%"></div></div>'+
       '<div class="workload-count">'+n+' active</div></div>';
-  }).join('') || '<div class="empty-state"><p>No technicians yet.</p></div>';
+  }).join('') ||
+    '<div class="empty-state"><h3>No technicians yet</h3><p>Add your first technician to start assigning jobs.</p>'+
+    '<button class="btn accent" id="empty-add-tech" type="button">+ Add your first technician</button></div>';
 
-  var recent = Store.jobs.slice(0,5).map(function(j){
+  var recentList = Store.jobs.slice(0,5).map(function(j){
     return '<li><span><strong>'+esc(j.customer)+'</strong> · '+esc(j.appliance)+'</span>'+
       '<span class="pill '+j.status+'">'+STATUS_META[j.status].label+'</span></li>';
-  }).join('') || '<li>No jobs yet.</li>';
+  }).join('');
+  var recentPanel = '<div class="panel"><h2>Latest job cards</h2>'+
+    (recentList
+      ? '<ul class="recent-list">'+recentList+'</ul>'
+      : '<div class="empty-state"><h3>No jobs yet</h3><p>Create your first job card to track a repair.</p>'+
+        '<button class="btn accent" id="empty-new-job" type="button">+ Create your first job card</button></div>')+
+    '</div>';
+
+  var pristine = !Store.jobs.length && !Store.techs.length && !Store.amc.length;
+  var welcome = pristine
+    ? '<div class="panel"><h2>Welcome to SevaDesk</h2>'+
+      '<p class="welcome-sub">Your shop is empty. Add your team and start creating job cards — or explore with sample data from Settings.</p>'+
+      '<div class="welcome-actions">'+
+      '<button class="btn accent" id="wel-new-job" type="button">+ Create your first job card</button>'+
+      '<button class="btn" id="wel-new-tech" type="button">+ Add your first technician</button></div></div>'
+    : '';
 
   el.innerHTML =
+    welcome+
     '<div class="stat-grid">'+cards+'</div>'+
     '<div class="revenue-card"><div><div class="stat-label">Revenue collected this month</div>'+
     '<div class="revenue-note">Completed jobs, updated live as jobs move to Done</div></div>'+
     '<div class="revenue-num">'+fmtINR(rev)+'</div></div>'+
     '<div class="panel"><h2>Technician workload</h2>'+workload+'</div>'+
-    '<div class="panel"><h2>Latest job cards</h2><ul class="recent-list">'+recent+'</ul></div>';
+    recentPanel;
+
+  // wire empty-state CTAs (ids exist only in the state they belong to)
+  var ctaWires = [['wel-new-job','empty-new-job',openJobModal],['wel-new-tech','empty-add-tech',openTechModal]];
+  ctaWires.forEach(function(pair){
+    pair.slice(0,2).forEach(function(id){
+      var b = document.getElementById(id);
+      if(b) b.onclick = pair[2];
+    });
+  });
 }
 
 /* ----- kanban board ----- */
@@ -348,6 +402,13 @@ function jobCardHTML(j){
 
 function renderBoard(){
   var el = document.getElementById('view-board');
+  if(!Store.jobs.length){
+    el.innerHTML = '<div class="empty-state board-empty"><h3>No job cards yet</h3>'+
+      '<p>Create your first job card, then drag it through New → Assigned → In Progress → Done.</p>'+
+      '<button class="btn accent" id="board-new-job" type="button">+ Create your first job card</button></div>';
+    document.getElementById('board-new-job').onclick = openJobModal;
+    return;
+  }
   el.innerHTML = '<div class="board" id="board">'+STATUSES.map(function(s){
     var jobs = Store.jobs.filter(function(j){return j.status===s;});
     var cards = jobs.map(jobCardHTML).join('') || '<div class="col-empty">No jobs here yet</div>';
@@ -415,7 +476,10 @@ function renderTechs(){
       '</div></div>';
   }).join('');
   el.innerHTML = '<div class="tech-grid">'+(cards||'')+'</div>'+
-    (Store.techs.length?'':'<div class="empty-state"><h3>No technicians yet</h3><p>Add your first technician to start assigning jobs.</p></div>');
+    (Store.techs.length?'':'<div class="empty-state"><h3>No technicians yet</h3><p>Add your first technician to start assigning jobs.</p>'+
+    '<button class="btn accent" id="techs-add-first" type="button">+ Add your first technician</button></div>');
+  var techFirst = document.getElementById('techs-add-first');
+  if(techFirst) techFirst.onclick = openTechModal;
   el.querySelectorAll('.tech-card').forEach(function(card, i){
     var t = Store.techs[i];
     card.querySelector('[data-edit]').onclick = function(){ openTechModal(t.id); };
@@ -453,7 +517,11 @@ function renderAmc(){
 
   el.innerHTML =
     '<div class="amc-filters">'+chip('all','All')+chip('overdue','Overdue')+chip('dueweek','Due this week')+chip('upcoming','Upcoming')+'</div>'+
-    (rows || '<div class="empty-state"><h3>No reminders here</h3><p>Add a customer\u2019s next-service date to get reminded.</p></div>');
+    (rows || '<div class="empty-state"><h3>No reminders here</h3><p>Add a customer\u2019s next-service date to get reminded.</p>'+
+    '<button class="btn accent" id="amc-add-first" type="button">+ Add your first reminder</button></div>');
+
+  var amcFirst = document.getElementById('amc-add-first');
+  if(amcFirst) amcFirst.onclick = openAmcModal;
 
   el.querySelectorAll('.filter-chip').forEach(function(c){ c.onclick=function(){ amcFilter=c.dataset.f; renderAmc(); }; });
   el.querySelectorAll('.amc-row').forEach(function(row){
@@ -465,6 +533,22 @@ function renderAmc(){
       if(confirm('Delete reminder for '+(r?r.customer:'this customer')+'?')){ Store.deleteAmc(id); render(); toast('Reminder deleted'); }
     };
   });
+}
+
+/* ----- settings ----- */
+function renderSettings(){
+  var el = document.getElementById('view-settings');
+  var n = Store.jobs.length+Store.techs.length+Store.amc.length;
+  el.innerHTML =
+    '<div class="panel"><h2>Sample data</h2>'+
+    '<p class="welcome-sub">Load a realistic demo shop — technicians, job cards and AMC reminders — to explore SevaDesk. '+
+    (n ? 'You already have '+n+' record'+(n===1?'':'s')+'; loading will replace them after a confirmation.' : 'Your data is currently empty.')+'</p>'+
+    '<button class="btn" id="set-sample" type="button">Load sample data</button></div>'+
+    '<div class="panel"><h2>Start fresh</h2>'+
+    '<p class="welcome-sub">Delete every job card, technician and AMC reminder stored in this browser. This cannot be undone.</p>'+
+    '<button class="btn danger" id="set-clear" type="button">Clear all data</button></div>';
+  document.getElementById('set-sample').onclick = loadSampleData;
+  document.getElementById('set-clear').onclick = clearAllData;
 }
 
 /* ---------------- forms ---------------- */
@@ -555,22 +639,13 @@ function runSelftest(){
   var failReason = '';
   function check(name, ok){ checks.push([name, !!ok]); if(!ok && !failReason) failReason = name; }
 
-  // backup existing namespace data so normal mode is untouched
-  var backup = {};
+  // the selftest owns the whole namespace: wipe → seed → assert → wipe.
+  // normal-mode data is NOT preserved under ?selftest=1; the app is left EMPTY.
   var startView = currentView;
-  for(var i=0;i<localStorage.length;i++){
-    var k = localStorage.key(i);
-    if(k && k.indexOf(NS)===0) backup[k]=localStorage.getItem(k);
-  }
-  function wipeNS(){
-    var ks=[];
-    for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k&&k.indexOf(NS)===0) ks.push(k); }
-    ks.forEach(function(k){ localStorage.removeItem(k); });
-  }
 
   try{
-    wipeNS();
-    seedIfNeeded();
+    wipeNamespace();
+    seedSample();
     check('seed flag set', localStorage.getItem(K.seeded)==='1');
     check('3 technicians seeded', Store.techs.length===3);
     check('8 jobs seeded', Store.jobs.length===8);
@@ -618,10 +693,12 @@ function runSelftest(){
   }catch(e){
     check('no exception thrown ('+(e&&e.message||e)+')', false);
   }finally{
-    // restore normal-mode data exactly
-    wipeNS();
-    Object.keys(backup).forEach(function(k){ localStorage.setItem(k, backup[k]); });
+    // leave the app EMPTY: wipe everything (seeded flag included), no re-seed
+    wipeNamespace();
     Store.load();
+    check('namespace fully wiped incl. seeded flag',
+      !localStorage.getItem(K.seeded) && !localStorage.getItem(K.jobs) &&
+      !localStorage.getItem(K.techs) && !localStorage.getItem(K.amc));
     setView(startView);
   }
 
@@ -633,15 +710,13 @@ function runSelftest(){
   var banner = document.getElementById('selftest-banner');
   banner.hidden = false;
   banner.className = ok ? 'pass' : 'fail';
-  banner.textContent = title + (ok ? '' : ' — normal data restored, app intact');
+  banner.textContent = title + (ok ? '' : ' — app left empty, intact');
   return ok;
 }
 
 /* ---------------- boot ---------------- */
 function boot(){
-  Store.load();
-  seedIfNeeded();
-  Store.load(); // pick up seeded data
+  Store.load(); // no auto-seed: the app starts clean; sample data is opt-in via Settings
   document.querySelectorAll('.nav-btn').forEach(function(b){
     b.addEventListener('click', function(){ setView(b.dataset.view); });
   });

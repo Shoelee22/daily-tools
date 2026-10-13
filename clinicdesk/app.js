@@ -237,6 +237,17 @@ function openModal(html, wide) {
 }
 function closeModal() { $('#modal-root').innerHTML = ''; }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+/* ---------- shared empty state (on-brand: empty-note panel + CTA) ---------- */
+function emptyState(icon, title, sub, cta) {
+  // cta: { label, action, id? } — optional
+  let btn = '';
+  if (cta) {
+    btn = '<br/><button class="btn btn-primary" data-action="' + cta.action + '"' +
+      (cta.id ? ' data-id="' + cta.id + '"' : '') + '>' + ICONS.plus + ' ' + cta.label + '</button>';
+  }
+  return '<div class="empty-note">' + icon + '<br/><b>' + title + '</b><br/>' + sub + btn + '</div>';
+}
 function openConfirm(msg, label, fn) {
   window._confirmFn = fn;
   openModal(
@@ -304,7 +315,8 @@ function viewDashboard() {
   const recent = S.visits.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5);
   const recentList = recent.length
     ? '<div class="timeline">' + recent.map(v => visitCard(v, true)).join('') + '</div>'
-    : '<div class="empty-note">No visits recorded yet.</div>';
+    : emptyState(ICONS.cal, 'No visits recorded yet', 'Register a patient, then record the first consultation.',
+        { label: 'Register your first patient', action: 'open-patient-modal' });
   const stat = (label, val, note, cls) =>
     '<div class="stat' + (cls ? ' ' + cls : '') + '"><p class="s-label">' + label + '</p><p class="s-value num">' + val + '</p><p class="s-note">' + note + '</p></div>';
   /* ring cue: overdue share of due follow-ups (presentational only) */
@@ -346,7 +358,15 @@ function renderPatientGrid() {
   const q = patientFilter.q.trim().toLowerCase();
   const list = S.patients.filter(p => !q || p.name.toLowerCase().indexOf(q) > -1 || p.phone.indexOf(q) > -1)
     .sort((a, b) => a.name.localeCompare(b.name));
-  if (!list.length) { grid.innerHTML = '<div class="card" style="grid-column:1/-1"><div class="empty-note">No patients match. Add one to get started.</div></div>'; return; }
+  if (!list.length) {
+    grid.innerHTML = '<div class="card" style="grid-column:1/-1">' +
+      (S.patients.length
+        ? '<div class="empty-note">No patients match. Try a different search.</div>'
+        : emptyState(ICONS.plus, 'No patients yet', 'Register your first patient to start keeping records.',
+            { label: 'Register your first patient', action: 'open-patient-modal' })) +
+      '</div>';
+    return;
+  }
   grid.innerHTML = list.map(p => {
     const vs = visitsOf(p.id);
     const last = vs.length ? fmtDate(vs[0].date) : 'No visits yet';
@@ -369,7 +389,8 @@ function viewPatientDetail() {
         '<div style="flex:1;min-width:240px">' + visitCard(v, false) + '</div>' +
         '<button class="icon-btn danger" data-action="delete-visit" data-id="' + v.id + '" aria-label="Delete visit on ' + fmtDate(v.date) + '">' + ICONS.trash + '</button></div>'
       ).join('') + '</div>'
-    : '<div class="empty-note">' + ICONS.cal + '<br/>No visits yet. Record the first consultation.</div>';
+    : emptyState(ICONS.cal, 'No visits yet', 'Record the first consultation for ' + esc(p.name) + '.',
+        { label: 'Record first visit', action: 'open-visit-modal', id: p.id });
   return '<button class="back-link" data-action="back-patients">' + ICONS.back + ' All patients</button>' +
     '<div class="card" style="margin-bottom:20px"><div class="detail-head">' +
     '<span class="avatar" aria-hidden="true">' + esc(initials(p.name)) + '</span>' +
@@ -451,7 +472,10 @@ function renderVisitList() {
       (p && (p.name.toLowerCase().indexOf(q) > -1 || p.phone.indexOf(q) > -1));
   }).sort((a, b) => b.date.localeCompare(a.date));
   box.innerHTML = list.length ? list.map(v => visitCard(v, true)).join('')
-    : '<div class="empty-note">No visits match these filters.</div>';
+    : (S.visits.length
+        ? '<div class="empty-note">No visits match these filters.</div>'
+        : emptyState(ICONS.cal, 'No visits yet', 'Record a consultation to see it here.',
+            { label: 'Register your first patient', action: 'open-patient-modal' }));
 }
 
 /* ----- FOLLOW-UPS ----- */
@@ -481,8 +505,9 @@ function viewSettings() {
     '<div class="card"><h3 class="panel-title">Data</h3><p class="panel-sub">Everything stays on this device (localStorage)</p>' +
     '<div style="display:flex;flex-direction:column;gap:10px">' +
     '<button class="btn btn-ghost btn-block" data-action="export-data">Download backup (JSON)</button>' +
-    '<button class="btn btn-danger btn-block" data-action="reset-data">Reset all data</button>' +
-    '<p style="font-size:13px;color:var(--ink-soft);margin:6px 0 0">Reset wipes patients, visits and settings, then restores the starter records.</p></div></div></div>';
+    '<button class="btn btn-ghost btn-block" data-action="sample-data">Load sample data</button>' +
+    '<button class="btn btn-danger btn-block" data-action="clear-data">Clear all data</button>' +
+    '<p style="font-size:13px;color:var(--ink-soft);margin:6px 0 0">Clear all data wipes patients, visits and clinic settings — you start fresh with an empty clinic. Load sample data first if you want to explore with demo records.</p></div></div></div>';
 }
 function exportData() {
   const dump = {};
@@ -542,9 +567,13 @@ document.addEventListener('click', e => {
   if (a === 'fu-done') { markFollowupDone(t.dataset.id); render(); toast('Follow-up marked done.'); return; }
 
   if (a === 'export-data') { exportData(); return; }
-  if (a === 'reset-data') {
-    openConfirm('Reset everything? Patients, visits and settings will be wiped and the starter records restored.', 'Reset all', () => {
-      store.wipe(); loadState(); seed(); view = 'dashboard'; activePatient = null; render(); toast('All data reset.');
+  if (a === 'sample-data') {
+    seed(); view = 'dashboard'; activePatient = null; render(); toast('Sample data loaded.');
+    return;
+  }
+  if (a === 'clear-data') {
+    openConfirm('Clear all data? Patients, visits and clinic settings will be wiped. You will start fresh with an empty clinic.', 'Clear all data', () => {
+      store.wipe(); loadState(); view = 'dashboard'; activePatient = null; render(); toast('All data cleared. Starting fresh.');
     });
     return;
   }
@@ -687,19 +716,19 @@ function runSelftest() {
   } catch (err) {
     return { msg: 'SELFTEST FAIL: exception ' + String(err && err.message || err), ok: false, snapshot };
   } finally {
+    // end-of-test cleanup: leave the namespace EMPTY (wipe only, no re-seed),
+    // restoring any prior normal-mode data first so real use is never corrupted
     store.wipe();
     const keys = Object.keys(snapshot);
     if (keys.length) keys.forEach(k => localStorage.setItem(k, snapshot[k]));
     loadState();
-    if (!store.get('seeded', false)) seed();
     view = 'dashboard'; activePatient = null; render();
   }
 }
 
 /* ---------- boot ---------- */
 function boot() {
-  loadState();
-  if (!store.get('seeded', false)) seed();
+  loadState();   // clean start: empty state when nothing stored (no auto-seed)
   render();
   startClock();
   if (new URLSearchParams(location.search).get('selftest') === '1') {

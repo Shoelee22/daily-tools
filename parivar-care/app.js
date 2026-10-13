@@ -215,7 +215,7 @@ function switchView(v){
 function render(){
   loadAll();
   var fn={dashboard:renderDashboard,elders:renderElders,medicines:renderMedicines,
-          checkins:renderCheckins,sos:renderSOS}[state.view];
+          checkins:renderCheckins,sos:renderSOS,settings:renderSettings}[state.view];
   var el=$('#view-'+state.view);
   el.innerHTML=fn();
   el.classList.remove('rise'); void el.offsetWidth; el.classList.add('rise');
@@ -319,7 +319,8 @@ function renderMedicines(){
     h+='<article class="card '+pastelFor(i)+'"><div class="med-head"><h3>'+esc(e.name)+'&rsquo;s medicines</h3>'+
        '<button class="btn primary small" data-act="add-med" data-elder="'+e.id+'">'+icon('plus')+'Add medicine</button></div>';
     if(!meds.length){
-      h+='<div class="empty" style="padding:1.4rem"><p style="margin:0">No medicines scheduled yet.</p></div>';
+      h+='<div class="empty" style="padding:1.4rem"><p style="margin:0 0 .8rem">No medicines scheduled yet.</p>'+
+         '<button class="btn primary small" data-act="add-med" data-elder="'+e.id+'">'+icon('plus')+'Add medicine</button></div>';
     }else{
       h+='<h4 style="font-family:var(--font-body);font-size:1.05rem;margin:.4rem 0 .7rem">Today&rsquo;s doses — '+fmtD(todayStr())+'</h4>';
       due.forEach(function(d){
@@ -362,7 +363,8 @@ function renderMedicines(){
 function renderCheckins(){
   var h='<div class="page-head"><div><h1>Check-ins</h1><div class="sub">One check-in per elder per day. Streaks count consecutive “checked in” days.</div></div></div>';
   if(!DB.elders.length){
-    h+='<div class="empty">'+icon('calendar')+'<h3>No elders yet</h3></div>';
+    h+='<div class="empty">'+icon('calendar')+'<h3>No elders yet</h3><p>Add an elder to start daily check-ins.</p>'+
+       '<button class="btn primary" data-act="add-elder">'+icon('plus')+'Add your first elder</button></div>';
     return h;
   }
   var t=todayStr();
@@ -391,7 +393,8 @@ function renderSOS(){
   var h='<div class="page-head"><div><h1>SOS — emergency cards</h1>'+
     '<div class="sub">Big buttons for urgent moments. Keep this page bookmarked.</div></div></div>';
   if(!DB.elders.length){
-    h+='<div class="empty">'+icon('siren')+'<h3>No elders yet</h3></div>';
+    h+='<div class="empty">'+icon('siren')+'<h3>No elders yet</h3><p>Add an elder to keep their SOS card here.</p>'+
+       '<button class="btn primary" data-act="add-elder">'+icon('plus')+'Add your first elder</button></div>';
     return h;
   }
   DB.elders.forEach(function(e){
@@ -411,6 +414,28 @@ function renderSOS(){
        '</dl></div></article>';
   });
   return h;
+}
+
+/* ----- settings ----- */
+function renderSettings(){
+  var h='<div class="page-head"><div><h1>Settings</h1>'+
+    '<div class="sub">Your data stays on this device. Start fresh whenever you like.</div></div></div>';
+  h+='<div class="card"><h2 style="font-size:1.35rem;margin-bottom:.4rem">Your data</h2>'+
+    '<p style="color:var(--ink-soft)">Load sample data to explore how Parivar Care works, or clear everything and begin with your own family.</p>'+
+    '<div class="settings-actions">'+
+    '<button class="btn primary" data-act="load-sample">'+icon('plus')+'Load sample data</button>'+
+    '<button class="btn danger-ghost" data-act="clear-all">'+icon('trash')+'Clear all data</button></div>'+
+    '<div class="settings-note">“Clear all data” removes all elders, medicines, check-ins and dose records from this device.</div></div>';
+  return h;
+}
+
+/* ---------- toast ---------- */
+function toast(msg){
+  var el=document.createElement('div');
+  el.className='toast'; el.setAttribute('role','status'); el.textContent=msg;
+  document.body.appendChild(el);
+  requestAnimationFrame(function(){ el.classList.add('show'); });
+  setTimeout(function(){ el.classList.remove('show'); setTimeout(function(){ el.remove(); },350); },2600);
 }
 
 /* ================= MODAL & FORMS ================= */
@@ -514,6 +539,10 @@ function bindView(){
       else if(act==='take'){ markDose(id,med,todayStr(),b.dataset.slot); render(); }
       else if(act==='untake'){ unmarkDose(id,med,todayStr(),b.dataset.slot); render(); }
       else if(act==='goto') switchView(b.dataset.view);
+      else if(act==='load-sample'){ seed(); loadAll(); render(); toast('Sample data loaded. Clear it from Settings any time.'); }
+      else if(act==='clear-all'){
+        if(confirm('Start fresh? This removes all elders, medicines, check-ins and dose records from this device.')){
+          wipeNamespace(); loadAll(); render(); toast('All data cleared. A fresh start.'); } }
       else if(act==='close-modal') closeModal();
     });
   });
@@ -584,6 +613,10 @@ function runSelftest(){
     switchView('sos');
     t('sos view renders call buttons', $$('#view-sos .sos-btn').length===DB.elders.length*2);
     switchView('dashboard');
+    /* (e) leave the app EMPTY for real use: wipe everything, clear the seeded flag, no re-seed */
+    wipeNamespace();
+    loadAll();
+    switchView('dashboard');
   }catch(err){
     results.push({name:'EXCEPTION: '+(err&&err.message),ok:false});
   }
@@ -603,7 +636,8 @@ function runSelftest(){
 function init(){
   var qs=new URLSearchParams(location.search);
   if(qs.get('selftest')==='1'){ runSelftest(); return; }
-  if(!localStorage.getItem(PREFIX+'seeded')) seed();
+  /* No auto-seed on normal launch: the app starts clean for real use.
+     Seed data only loads on explicit user action (Settings → Load sample data) or in the selftest. */
   loadAll();
   switchView('dashboard');
 }

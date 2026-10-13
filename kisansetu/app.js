@@ -189,7 +189,7 @@ function switchView(v){
 }
 function render(){
   loadAll();
-  var fn={dashboard:renderDashboard,prices:renderPrices,expenses:renderExpenses,schemes:renderSchemes}[state.view];
+  var fn={dashboard:renderDashboard,prices:renderPrices,expenses:renderExpenses,schemes:renderSchemes,settings:renderSettings}[state.view];
   var el=$('#view-'+state.view);
   el.innerHTML=fn();
   el.classList.remove('rise');void el.offsetWidth;el.classList.add('rise');
@@ -303,7 +303,8 @@ function renderExpenses(){
   });
   h+='</div><h2 class="section-title">Entries</h2>';
   if(!list.length){
-    h+='<div class="empty">'+icon('wallet')+'<h3>No expenses this month</h3><p>Add one to start tracking.</p></div>';
+    h+='<div class="empty">'+icon('wallet')+'<h3>No expenses this month</h3><p>Add one to start tracking.</p>'+
+       '<button class="btn primary" data-act="add-expense">'+icon('plus')+'Add expense</button></div>';
     return h;
   }
   h+='<div class="table-wrap"><table class="ledger"><thead><tr><th>Date</th><th>Category</th><th>Note</th><th class="r">Amount</th><th></th></tr></thead><tbody>';
@@ -353,6 +354,29 @@ function renderSchemes(){
   return h;
 }
 
+/* ----- settings ----- */
+function renderSettings(){
+  var h='<div class="page-head"><div><h1>Settings</h1>'+
+    '<div class="sub">Your records stay on this device. Start fresh whenever you like.</div></div></div>';
+  h+='<div class="settings-card"><h2>Your data</h2>'+
+    '<p class="sub">Load sample data to explore KisanSetu, or clear everything and begin with your own records.</p>'+
+    '<div class="settings-actions">'+
+    '<button class="btn primary" data-act="load-sample">'+icon('plus')+'Load sample data</button>'+
+    '<button class="btn danger-ghost" data-act="clear-all">'+icon('trash')+'Clear all data</button></div>'+
+    '<div class="settings-note">Sample data note: yojana deadlines are illustrative — tap edit on any scheme to set the real dates.</div>'+
+    '<div class="settings-note">“Clear all data” removes all prices, expenses and schemes from this device.</div></div>';
+  return h;
+}
+
+/* ---------- toast ---------- */
+function toast(msg){
+  var el=document.createElement('div');
+  el.className='toast';el.setAttribute('role','status');el.textContent=msg;
+  document.body.appendChild(el);
+  requestAnimationFrame(function(){el.classList.add('show');});
+  setTimeout(function(){el.classList.remove('show');setTimeout(function(){el.remove();},350);},2600);
+}
+
 /* ================= MODAL & FORMS ================= */
 function openModal(title,bodyHTML){
   closeModal();
@@ -375,8 +399,8 @@ function actionsRow(submitLabel){
 
 function priceFormHTML(p){
   p=p||{date:todayStr()};
-  var crops=crops();
-  var datalist=crops.length?'<datalist id="crop-list">'+crops.map(function(c){return '<option value="'+esc(c)+'">';}).join('')+'</datalist>':'';
+  var cs=crops();
+  var datalist=cs.length?'<datalist id="crop-list">'+cs.map(function(c){return '<option value="'+esc(c)+'">';}).join('')+'</datalist>':'';
   return '<form id="price-form" novalidate>'+
     '<div class="field"><label for="f-crop">Crop *</label><input id="f-crop" name="crop" list="crop-list" value="'+esc(p.crop||'')+'" autocomplete="off">'+datalist+'<div class="err" id="err-crop"></div></div>'+
     '<div class="field"><label for="f-mandi">Mandi *</label><input id="f-mandi" name="mandi" value="'+esc(p.mandi||'')+'" placeholder="e.g. Nashik Mandi" autocomplete="off"><div class="err" id="err-mandi"></div></div>'+
@@ -461,6 +485,10 @@ function bindView(){
       else if(act==='edit-scheme')openSchemeForm(getScheme(id));
       else if(act==='del-scheme'){var s=getScheme(id);
         if(confirm('Remove “'+s.name+'” from tracking?')){deleteScheme(id);render();}}
+      else if(act==='load-sample'){seed();loadAll();render();toast('Sample data loaded. Scheme dates are illustrative — edit them to the real ones.');}
+      else if(act==='clear-all'){
+        if(confirm('Start fresh? This removes all mandi prices, expenses and scheme deadlines from this device.')){
+          wipeNamespace();loadAll();render();toast('All data cleared. A fresh start.');}}
       else if(act==='close-modal')closeModal();
     });
   });
@@ -527,6 +555,10 @@ function runSelftest(){
     switchView('schemes');
     t('schemes view renders cards',$$('#view-schemes .scheme').length===5);
     switchView('dashboard');
+    /* leave the app EMPTY for real use: wipe everything, clear the seeded flag, no re-seed */
+    wipeNamespace();
+    loadAll();
+    switchView('dashboard');
   }catch(err){results.push({name:'EXCEPTION: '+(err&&err.message),ok:false});}
   var pass=results.filter(function(r){return r.ok;}).length,n=results.length;
   var okAll=pass===n;
@@ -541,7 +573,8 @@ function runSelftest(){
 function init(){
   var qs=new URLSearchParams(location.search);
   if(qs.get('selftest')==='1'){runSelftest();return;}
-  if(!localStorage.getItem(PREFIX+'seeded'))seed();
+  /* No auto-seed on normal launch: the app starts clean for real use.
+     Seed data only loads on explicit user action (Settings → Load sample data) or in the selftest. */
   loadAll();
   switchView('dashboard');
 }
