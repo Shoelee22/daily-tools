@@ -1,37 +1,94 @@
-# Daily Tools — 10 real-life products for India
+<div align="center">
 
-Full working web products for everyday needs — billing counters, clinics,
-landlords, farmers, elderly care. Open `index.html` and pick one.
+# रोज़मर्रा · Rozmarra
 
-No build step, no npm, no sign-ups, no external network calls.
-Your data stays in your browser's localStorage.
+### Everyday tools for everyday India.
 
-| # | Product | What it does |
-|---|---------|--------------|
-| 01 | [Dukaandaar POS](dukaandaar-pos/) | Counter billing with GST, inventory, printable invoices & sales reports for kirana/pharmacy shops |
-| 02 | [ClinicDesk](clinicdesk/) | Patient registry, visit history, prescriptions & follow-up reminders for small clinics |
-| 03 | [SevaDesk](sevadesk/) | Job-card kanban, technician dispatch & AMC reminders for repair/service businesses |
-| 04 | [GharSeva](gharseva/) | Book electricians/plumbers/carpenters; track jobs, rate pros |
-| 05 | [Kiraya](kiraya/) | Rent schedules, digital receipts, defaulter tracking & tenant ledgers for landlords |
-| 06 | [MotoLog](motolog/) | RC/insurance/PUC expiry alerts, fuel mileage log & service history for vehicles |
-| 07 | [Beesi](beesi/) | Chit-fund/kitty manager — collections, payout rotation, defaulters |
-| 08 | [Mohalla](mohalla/) | Neighbourhood board — notices, buy & sell, borrow, lost & found |
-| 09 | [Parivar Care](parivar-care/) | Daily check-ins, medicine reminders & SOS for elderly parents |
-| 10 | [KisanSetu](kisansetu/) | Mandi prices, farm expenses & scheme deadlines for farmers |
+Ten full working products for the life you actually live — the kirana counter, the clinic, the landlord's ledger, the bike in your parking, the beesi group, the mohalla board. No installs. No sign-ups. No servers watching. Your data stays in your browser.
 
-## Run locally
+**[→ Open Rozmarra](https://shoelee22.github.io/rozmarra/)**
+
+![Rozmarra home](screenshots/landing.png)
+
+</div>
+
+---
+
+## The ten tools
+
+| # | Tool | What it does | Open |
+|---|------|--------------|------|
+| 01 | **Dukaandaar POS** | Counter billing with GST, inventory auto-decrement, printable invoices & sales reports for kirana & pharmacy shops | [dukaandaar-pos](https://shoelee22.github.io/rozmarra/dukaandaar-pos/) |
+| 02 | **ClinicDesk** | Patient registry, visit history, prescriptions & follow-up reminders for small clinics | [clinicdesk](https://shoelee22.github.io/rozmarra/clinicdesk/) |
+| 03 | **SevaDesk** | Job cards on a kanban board, technician dispatch & AMC reminders for repair & service businesses | [sevadesk](https://shoelee22.github.io/rozmarra/sevadesk/) |
+| 04 | **GharSeva** | Book trusted electricians, plumbers & carpenters — track the job, pay on completion, rate the pro | [gharseva](https://shoelee22.github.io/rozmarra/gharseva/) |
+| 05 | **Kiraya** | Monthly rent schedules, digital receipts, defaulter tracking & tenant ledgers for landlords | [kiraya](https://shoelee22.github.io/rozmarra/kiraya/) |
+| 06 | **MotoLog** | RC / insurance / PUC expiry alerts, fuel log with km/l mileage & service history for your vehicles | [motolog](https://shoelee22.github.io/rozmarra/motolog/) |
+| 07 | **Beesi** | Chit-fund & kitty manager — monthly collections, payout rotation order & defaulter tracking | [beesi](https://shoelee22.github.io/rozmarra/beesi/) |
+| 08 | **Mohalla** | Your neighbourhood board — notices, buy & sell, borrow items, lost & found | [mohalla](https://shoelee22.github.io/rozmarra/mohalla/) |
+| 09 | **Parivar Care** | Daily check-ins, medicine reminders & one-tap SOS for elderly parents living alone | [parivar-care](https://shoelee22.github.io/rozmarra/parivar-care/) |
+| 10 | **KisanSetu** | Daily mandi prices, farm expense log & sarkari scheme deadlines for farmers | [kisansetu](https://shoelee22.github.io/rozmarra/kisansetu/) |
+
+## A look inside
+
+**SevaDesk** — the repair shop's mission control, clean even on day one:
+
+![SevaDesk](screenshots/sevadesk.png)
+
+**MotoLog** — your garage companion, waiting for its first vehicle:
+
+![MotoLog](screenshots/motolog.png)
+
+## How to use
+
+1. Open any tool above — it starts clean, ready for *your* data.
+2. Add your first entry (vehicle, patient, tenant…). Everything saves automatically in your browser.
+3. Curious first? Go to **Settings → Load sample data** to explore with realistic data, then **Clear all data** to start fresh.
+
+## Why it works this way
+
+- **Private by design** — every tool runs 100% in your browser via `localStorage`. No accounts, no backend, no tracking, nothing to leak.
+- **Offline-capable** — once loaded, the tools work without internet.
+- **Real money, real units** — ₹ INR throughout, Indian phone formats, DD-MMM-YYYY dates.
+- **Honest software** — what you see is what it does. No fake buttons, no placeholder screens.
+
+## Run it yourself
+
+It's static files — no build step, no dependencies:
 
 ```bash
-cd daily-tools && python3 -m http.server 8000
+git clone https://github.com/Shoelee22/rozmarra.git
+cd rozmarra
+python3 -m http.server 8000
 # open http://localhost:8000/
 ```
 
-Each product also has a `?selftest=1` mode that runs its full automated
-verification suite in the browser.
+Deploy anywhere static hosting works: GitHub Pages, Vercel, Netlify, Cloudflare Pages.
 
-## Design
+## For developers
 
-Every product has its own visual identity, guided by brand design-system
-references (adapted, not copied): Airtable, Oura, Linear, Airbnb, Mercury,
-BMW M, Mastercard, Pinterest, Apple, Starbucks — layered on dashboard-grade
-UI standards. Vanilla HTML/CSS/JS with system fonts throughout.
+Each tool is vanilla HTML/CSS/JS in its own folder with a `?selftest=1` harness — it wipes, seeds, scripts the full user flow, asserts persistence, and reports PASS/FAIL. Every tool ships with its self-test green and zero console errors.
+
+```
+rozmarra/
+├── index.html          # hub page
+├── screenshots/        # the images above
+├── dukaandaar-pos/
+├── clinicdesk/
+├── sevadesk/
+├── gharseva/
+├── kiraya/
+├── motolog/
+├── beesi/
+├── mohalla/
+├── parivar-care/
+└── kisansetu/
+```
+
+---
+
+<div align="center">
+
+*रोज़मर्रा — for the everyday.*
+
+</div>
